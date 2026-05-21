@@ -1,22 +1,21 @@
 # Nearbytes Specs
 
-This repository contains specifications for the **clean-code layer** of Nearbytes: the crypto, storage, log, and file-protocol packages. Application-layer, identity, transport, and reference specs live in the app repo (`nearbytes-app/docs/specs/`).
+Normative specifications for the clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-files`, `nearbytes-skeleton`).
 
-## Active specifications
+Application-layer specs remain in `nearbytes-app/docs/specs/`.
 
-**Storage**
+## Engineering
 
-- `storage/data-correctness-v0.2.md` — on-disk correctness and hash integrity rules
-- `storage/meta-storage-v0.3.md` — storage root layout (blocks/, channels/, opaque event format)
-- `storage/meta-storage-v2.md` — storage root discovery marker (Nearbytes.html), multi-root routing
-- `storage/shared-path-storage-v0.1.md` — shared-path storage backend
+- [`engineering/typescript-conventions-v1.md`](engineering/typescript-conventions-v1.md) — TypeScript style and package rules (normative)
 
-**Registry**
+## Storage and log
 
-- `registry/protocol-registry.md` — protocol identifier naming and versioning rules
+- [`storage/log-api-v1.md`](storage/log-api-v1.md) — `Log` / `EventLogApi` / `BlockStoreApi` (normative)
+- [`storage/data-correctness-v0.2.md`](storage/data-correctness-v0.2.md) — hash integrity on disk
+- [`storage/meta-storage-v0.3.md`](storage/meta-storage-v0.3.md) — root layout
+- [`storage/meta-storage-v2.md`](storage/meta-storage-v2.md) — discovery marker, multi-root (app layer)
+- [`storage/shared-path-storage-v0.1.md`](storage/shared-path-storage-v0.1.md) — historical; superseded by log-api-v1 for clean packages
 
-## Directory hygiene
+## Registry
 
-1. Only specs that are implemented (or actively being implemented) in the clean-code packages belong here.
-2. Application-layer semantics (file events, chat, identity, transport) live in `nearbytes-app/docs/specs/`.
-3. Keep filenames concise and family-scoped; prefer one concern per file.
+- [`registry/protocol-registry.md`](registry/protocol-registry.md)
