@@ -4,6 +4,10 @@ Normative specifications for the clean-code packages (`nearbytes-crypto`, `nearb
 
 Application-layer specs remain in `nearbytes-app/docs/specs/`.
 
+## Requirements
+
+- [`requirements/README.md`](requirements/README.md) — portability and sync discovery rules for clean packages
+
 ## Engineering
 
 - [`engineering/typescript-conventions-v1.md`](engineering/typescript-conventions-v1.md) — TypeScript style and package rules (normative)
