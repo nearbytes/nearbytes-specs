@@ -24,6 +24,9 @@ Status: normative for `nearbytes-sync`.
 | DISC-20 | LAN discovery MUST publish `_nearbytes._udp` with `alpn=nearbytes-sync-v1` and `syncPort`. |
 | DISC-21 | Implementations MAY emit UDP multicast fallback to `239.255.40.41:40441`. |
 | DISC-22 | After LAN discovery, peers connect via TCP and speak the same framed sync protocol as Hyperswarm duplex streams. |
+| DISC-23 | LAN TXT MUST include `prof`, the lower-case hex profile public key of the advertiser (130 hex chars). |
+| DISC-24 | LAN discovery MUST NOT open sync to advertisers whose `prof` is not in `config.friends` (and MUST ignore the local `prof`). |
+| DISC-25 | See `sync-protocol-v1.md` for association, handshake, and anti-entropy rules. |
 
 ## 4. Boot integration
 
