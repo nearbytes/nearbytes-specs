@@ -23,8 +23,10 @@ Requirements for reproducible performance numbers reported in `paper-nearbytes-h
 ### Throughput (goodput)
 
 - **Payload:** single `bench-tp-stream.bin` (paper: 32 MiB) or batch files (full/quick).
-- **Window:** `throughput-phase-start` … `throughput-phase-end` markers.
-- **Goodput:** `8 × nominal_bytes / (t_last_inbound_block − t_first_inbound_block)` on receiver.
+- **Receiver completion:** `bench-phase-throughput-complete.txt`, ≥95% of nominal bytes in `inbound-stored` chunks (≥1 MiB), or `listFiles` sees the stream file.
+- **Progress logs:** show inbound bytes/chunks (not only `listFiles 0/1`, which lags behind sync).
+- **Goodput (merge):** prefers sender `throughput-phase-start` wall time; falls back to receiver phase-4 start. `8 × bytes / (t_last − t_first)` over large inbound blocks.
+- **Timeouts:** separate `NEARBYTES_BENCH_LATENCY_TIMEOUT_MS` and `NEARBYTES_BENCH_THROUGHPUT_TIMEOUT_MS` (paper defaults: 120s / 180s).
 - Includes encryption, volume journal, sync framing — not wire-line iperf.
 
 ### Phases
