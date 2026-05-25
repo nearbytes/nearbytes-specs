@@ -41,6 +41,8 @@ A file is valid in `blocks/` if and only if:
 1. it is stored at `blocks/<hash>.bin`;
 2. `<hash>` equals SHA-256 of the block bytes.
 
+The digest is **produced by the log** at write time (see `storage/log-api-v1.md`, §2.3): the caller of `BlockStoreApi.store(data)` receives the hash as the return value and MUST reference the block by that value alone. Callers MUST NOT precompute the hash and assert it through `store`; the only path that may assert a previously computed hash is the streaming receiver `BlockStoreApi.storeAlreadyVerified(hash, data)` used by `nearbytes-sync`, which has incrementally verified the digest while the bytes arrived over the wire.
+
 ## 4. Channel Event Correctness
 
 A file is valid in `channels/<volumeId>/` if and only if:

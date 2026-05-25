@@ -92,6 +92,8 @@ Unless explicitly overridden by a specific protocol document:
 2. Binary values MUST be base64url without padding.
 3. Hash values MUST be lowercase hexadecimal.
 
+**Override — `nearbytes.sync.v1` friend carriage** (`sync-protocol-v1.md`): block `data` MUST use raw binary frames (SYNC-30); content encodings of block bytes are prohibited. The global base64url rule applies to nested `nb.*` records, not to sync block payloads.
+
 ## 8. Change Control
 
 Any new `nb.*` protocol ID or major-version increment MUST include:

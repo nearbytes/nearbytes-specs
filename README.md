@@ -11,6 +11,7 @@ Application-layer specs remain in `nearbytes-app/docs/specs/`.
 ## Engineering
 
 - [`engineering/typescript-conventions-v1.md`](engineering/typescript-conventions-v1.md) — TypeScript style and package rules (normative)
+- [`engineering/hash-evolution-v1.md`](engineering/hash-evolution-v1.md) — policy governing the SHA-256 content-address and conditions for evolving it (normative)
 
 ## Storage and log
 

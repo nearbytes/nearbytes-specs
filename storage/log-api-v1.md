@@ -1,7 +1,7 @@
 # Log API (normative)
 
 **Status:** normative  
-**Version:** 1.0  
+**Version:** 1.1  
 **Implementation:** `nearbytes-log`
 
 ---
@@ -9,6 +9,8 @@
 ## 1. Scope
 
 Defines the **only** persistence contract for the clean-code layer. Callers MUST NOT use a generic path→bytes VFS as the public abstraction.
+
+The log is the **sole authority of the content-address namespace**: callers MUST NOT compute a block's hash and pass it to the log; the log computes the hash from the bytes it persists and returns it. The single exception (§2.3) is the streaming receiver path used by `nearbytes-sync`, which computes the hash incrementally as bytes arrive over the wire and MAY assert it back to the log via a separate method.
 
 ---
 
@@ -35,9 +37,17 @@ interface Log {
 
 | Method | Semantics |
 |--------|-----------|
-| `store(hash, data, skipIfExists?)` | Write `blocks/<hash>.bin`; skip write if `skipIfExists` and file exists. |
-| `retrieve(hash)` | Read and `validateBlockBytes`; delete and throw on mismatch. |
+| `store(data, skipIfExists?)` | Compute `hash = SHA-256(data)`, write `blocks/<hash>.bin`, return `hash`. Skip write if `skipIfExists` and file exists. The hash returned is authoritative; callers MUST use it (and only it) to reference the block. |
+| `storeAlreadyVerified(hash, data, skipIfExists?)` | Streaming-receiver fast path: the caller asserts that `hash == SHA-256(data)` has already been verified incrementally. The log MUST NOT recompute the digest. Use only from `nearbytes-sync`'s receive sink; misuse silently corrupts the content-address namespace. |
+| `retrieve(hash, { verifyIntegrity? = true })` | Read; if `verifyIntegrity`, run `validateBlockBytes`; delete and throw on mismatch. |
 | `has(hash)` | Existence check for canonical block path. |
+
+Normative rules:
+
+1. The block hash algorithm is **SHA-256** of the encrypted block bytes (lower-case 64-hex). The protocol reserves the right to evolve this primitive (e.g. to RFC 6962 §2.1 Merkle Tree Hash over SHA-256) at a future major version; see `engineering/hash-evolution-v1.md` and the paper's appendix on parallel SHA-256.
+2. `store(data, …)` MUST NOT accept a hash parameter. The log is the sole producer of the address.
+3. `storeAlreadyVerified` MUST be exposed but is **not** the default. It exists exclusively to avoid re-hashing during the `nearbytes-sync` streaming receive path; consumers of the log other than `nearbytes-sync` MUST use `store`.
+4. `retrieve` with `verifyIntegrity: true` (default) MUST recompute the digest and reject mismatches. Sync senders MAY pass `verifyIntegrity: false` when streaming a block to a peer because the receiver re-verifies on arrival.
 
 ### 2.4 `ChannelPathMapper`
 
