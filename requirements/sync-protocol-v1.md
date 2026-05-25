@@ -4,17 +4,26 @@ Status: normative for `nearbytes-sync` Impl. v0 friend carriage.
 
 References: `sync-discovery-v1.md`.
 
+## 0. Profiles served by a node
+
+| Rule | Requirement |
+|------|-------------|
+| SYNC-00 | A sync node MAY serve $K \ge 0$ local profile public keys simultaneously. The set MUST be lower-case hex and SHOULD be derived from `NearbytesConfig.profiles`. When $K = 0$ the node MUST NOT start sync (no topic to join, no peer to authenticate against). |
+| SYNC-00a | Each sync association MUST authenticate exactly one local profile from the served set against exactly one remote profile from the friend set; an association MUST NOT swap identities mid-stream. |
+
+The terms *profile* and *identity* are not synonyms in this stack: a **profile** is the keypair / public-key noun used here, on the wire, and on disk; an **identity** is the social/display record (`nb.identity.record.v1`) signed *by* a profile. This spec governs the profile layer.
+
 ## 1. Transport association
 
 | Rule | Requirement |
 |------|-------------|
 | SYNC-01 | Each association MUST serialize framed writes and message handling so frames are never interleaved on one duplex. |
 | SYNC-02 | Friend carriage MUST perform a `hello` exchange before any `delta`, `subscribe`, `have`, `want`, or `data` message. |
-| SYNC-03 | `hello.senderProfile` MUST be the lower-case hex profile public key of the sender. |
+| SYNC-03 | `hello.senderProfile` MUST be the lower-case hex profile public key of the sender; it MUST equal the local profile chosen for this association from SYNC-00. |
 | SYNC-04 | The receiver MUST close the association if `senderProfile` is not a configured friend (friend carriage) or policy denies the subject. |
 | SYNC-05 | The receiver MUST reject a duplicate `sessionNonce` on the same association. |
-| SYNC-06 | At most one active sync association per remote friend profile public key; a new association for the same friend MUST replace the previous one. |
-| SYNC-07 | On a friend association, `subject` MUST be `profile(remoteFriendPublicKey)` (the remote party's profile subject). |
+| SYNC-06 | At most one active sync association per ordered pair $(\text{local profile}, \text{remote profile})$; a new association for the same pair MUST replace the previous one. |
+| SYNC-07 | On a friend association, `subject` MUST be `profile(localProfilePublicKey)` — i.e. the profile being *targeted* on the receiver — and both sides MUST agree on `subject` for the association to proceed. The receiver MUST select its local profile by matching `subject.profile` against its served set; if no match exists the receiver MUST close the association. |
 
 ## 2. Anti-entropy
 
