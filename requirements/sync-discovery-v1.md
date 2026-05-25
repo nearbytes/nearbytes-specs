@@ -15,7 +15,7 @@ Status: normative for `nearbytes-sync`.
 | Rule | Requirement |
 |------|-------------|
 | DISC-10 | Friend carriage MUST join $\topic(\mathsf{profile}(f))$ per configured friend $f$. |
-| DISC-11 | Topic derivation MUST match the paper: `H("nearbytes:sync:v1" \|\| canonical(subject))`. |
+| DISC-11 | Topic derivation MUST be `H("nearbytes:sync:v1" \|\| canonical(subject))`. |
 
 ## 3. mDNS / DNS-SD
 

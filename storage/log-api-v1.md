@@ -44,7 +44,7 @@ interface Log {
 
 Normative rules:
 
-1. The block hash algorithm is **SHA-256** of the encrypted block bytes (lower-case 64-hex). The protocol reserves the right to evolve this primitive (e.g. to RFC 6962 §2.1 Merkle Tree Hash over SHA-256) at a future major version; see `engineering/hash-evolution-v1.md` and the paper's appendix on parallel SHA-256.
+1. The block hash algorithm is **SHA-256** of the encrypted block bytes (lower-case 64-hex). The protocol reserves the right to evolve this primitive (e.g. to RFC 6962 §2.1 Merkle Tree Hash over SHA-256) at a future major version; see `engineering/hash-evolution-v1.md`.
 2. `store(data, …)` MUST NOT accept a hash parameter. The log is the sole producer of the address.
 3. `storeAlreadyVerified` MUST be exposed but is **not** the default. It exists exclusively to avoid re-hashing during the `nearbytes-sync` streaming receive path; consumers of the log other than `nearbytes-sync` MUST use `store`.
 4. `retrieve` with `verifyIntegrity: true` (default) MUST recompute the digest and reject mismatches. Sync senders MAY pass `verifyIntegrity: false` when streaming a block to a peer because the receiver re-verifies on arrival.

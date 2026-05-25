@@ -2,7 +2,7 @@
 
 Status: normative for `nearbytes-sync` Impl. v0 friend carriage.
 
-References: paper §friend-v0, §handshake, `sync-discovery-v1.md`.
+References: `sync-discovery-v1.md`.
 
 ## 1. Transport association
 

@@ -3,7 +3,7 @@
 **Status:** normative
 **Scope:** governs how Nearbytes evolves the cryptographic hash function used as the content-address of blocks and events.
 
-References: `storage/log-api-v1.md` (§2.3), `storage/data-correctness-v0.2.md` (§3), `paper-nearbytes-hypercore` Appendix on parallel SHA-256.
+References: `storage/log-api-v1.md` (§2.3), `storage/data-correctness-v0.2.md` (§3).
 
 ## 1. Current state
 
@@ -16,7 +16,7 @@ Two design choices remove any pressure to switch to a tree hash *inside* a singl
 1. **The log owns the address.** The log computes the digest from the bytes it persists (`BlockStoreApi.store(data)`); only the sync streaming receiver may assert a pre-computed digest (`storeAlreadyVerified`). There is no scatter-gather across packages.
 2. **Files are split into blocks below the single-thread SHA-256 budget.** The `file-events` family already supports manifest-of-blocks (`nb.content.manifest.v1`). When file sizes can exceed a single-thread hash budget (currently ${\approx}27$ Gb/s of SHA-256 on Apple Silicon), the file layer MUST split into multiple blocks. Cross-block parallelism is then a property of `nearbytes-sync` (concurrent streams) and of the per-block hash worker (one core per block).
 
-Consequently, RFC 6962 §2.1 Merkle Tree Hash over SHA-256 is **not** required as a content-address scheme. It remains documented in `paper-nearbytes-hypercore` (Appendix on parallel SHA-256) as a fallback should a future protocol revision need to hash a *single* block that exceeds the single-thread SHA-256 budget; in that case it would be introduced under a new major version of the content-address.
+Consequently, RFC 6962 §2.1 Merkle Tree Hash over SHA-256 is **not** required as a content-address scheme. It is implemented in `nearbytes-crypto` as `computeMerkleHash` and is reserved as a fallback should a future protocol revision need to hash a *single* block that exceeds the single-thread SHA-256 budget; in that case it would be introduced under a new major version of the content-address.
 
 ## 3. Compatibility boundary
 
