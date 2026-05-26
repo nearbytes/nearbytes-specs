@@ -58,7 +58,7 @@ Current examples:
 
 1. hub/log model -> `application/hub-model-v0.2.md`
 2. file command semantics -> `application/file-commands-v0.2.md`
-3. file event/replay model -> `application/file-events-v0.3.md`
+3. file event/replay model -> `application/file-events-v0.4.md`
 4. identity management command semantics -> `identity/identity-management-v0.2.md`
 5. LAN sync transport family -> `transport/lan-sync-v0.4.md`
 6. LAN storage-command family -> `transport/storage-commands-v0.1.md`
