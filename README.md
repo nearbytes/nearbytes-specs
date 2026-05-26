@@ -1,12 +1,16 @@
 # Nearbytes Specs
 
-Normative specifications for the clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-files`, `nearbytes-skeleton`).
+Normative specifications for the clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-skeleton`, `nearbytes-files`).
 
-Application-layer specs remain in `nearbytes-app/docs/specs/`.
+Application-layer specs of the `nearbytes-app` UI live in `nearbytes-app/docs/specs/`.
 
 ## Requirements
 
-- [`requirements/README.md`](requirements/README.md) — portability and sync discovery rules for clean packages
+- [`requirements/README.md`](requirements/README.md) — index of normative requirement documents
+- [`requirements/portability-v1.md`](requirements/portability-v1.md) — browser / Node / Pear runtime portability
+- [`requirements/sync-discovery-v1.md`](requirements/sync-discovery-v1.md) — friend & sibling carriage, dataDir-anchored node identity, singleton-sync/plural-writers split (DISC-26, DISC-27.1–27.4)
+- [`requirements/sync-protocol-v1.md`](requirements/sync-protocol-v1.md) — `nearbytes.sync.v1` framed message protocol
+- [`requirements/benchmark-methodology-v1.md`](requirements/benchmark-methodology-v1.md) — methodology for `nearbytes-benchmarks`
 
 ## Engineering
 
@@ -20,6 +24,10 @@ Application-layer specs remain in `nearbytes-app/docs/specs/`.
 - [`storage/meta-storage-v0.3.md`](storage/meta-storage-v0.3.md) — root layout
 - [`storage/meta-storage-v2.md`](storage/meta-storage-v2.md) — discovery marker, multi-root (app layer)
 - [`storage/shared-path-storage-v0.1.md`](storage/shared-path-storage-v0.1.md) — historical; superseded by log-api-v1 for clean packages
+
+## Application
+
+- [`application/file-events-v0.4.md`](application/file-events-v0.4.md) — file-volume event protocol (`CREATE_FILE`, `MKDIR`, `DELETE`, `RENAME`) and materializer cascade semantics
 
 ## Registry
 
