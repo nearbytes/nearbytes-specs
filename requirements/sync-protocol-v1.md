@@ -70,6 +70,6 @@ The terms *profile* and *identity* are not synonyms in this stack: a **profile**
 
 | Rule | Requirement |
 |------|-------------|
-| SYNC-50 | Block fetches MUST be allowed to run in parallel across distinct peers/friends/siblings and across distinct blocks. The number of in-flight block streams per association is bounded by the implementation; the number of in-flight associations is bounded by the authorized set (friend ∪ sibling). |
+| SYNC-50 | Block fetches MUST be allowed to run in parallel across distinct peers/friends/siblings and across distinct blocks, subject to SYNC-14 (per-hash single-flight). The number of in-flight block streams per association is bounded by the implementation; the number of in-flight associations is bounded by the authorized set (friend ∪ sibling). |
 | SYNC-51 | Per-block hashing is single-thread SHA-256 (hardware-accelerated where available). Cross-block parallelism MUST come from concurrent in-flight blocks, not from intra-block tree hashing, as long as the file-level encoding splits files into individually addressable blocks below the single-thread SHA-256 budget (see `application/file-events-v0.3.md`). |
 | SYNC-52 | Senders MAY pump multiple block streams concurrently as long as each duplex serialises framed writes per SYNC-01; receivers MAY hash and persist them in parallel by routing each stream to an independent `BlockStoreApi.storeAlreadyVerified` call. |

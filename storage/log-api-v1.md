@@ -37,8 +37,8 @@ interface Log {
 
 | Method | Semantics |
 |--------|-----------|
-| `store(data, skipIfExists?)` | Compute `hash = SHA-256(data)`, write `blocks/<hash>.bin`, return `hash`. Skip write if `skipIfExists` and file exists. The hash returned is authoritative; callers MUST use it (and only it) to reference the block. |
-| `storeAlreadyVerified(hash, data, skipIfExists?)` | Streaming-receiver fast path: the caller asserts that `hash == SHA-256(data)` has already been verified incrementally. The log MUST NOT recompute the digest. Use only from `nearbytes-sync`'s receive sink; misuse silently corrupts the content-address namespace. |
+| `store(data, skipIfExists?)` | Compute `hash = SHA-256(data)`, write `blocks/<hash>.bin`, return `hash`. Skip write if `skipIfExists` and file exists. The hash returned is authoritative; callers MUST use it (and only it) to reference the block. Idempotent on same hash, including under concurrent writers (the file IS the hash, so the merge is identity). |
+| `storeAlreadyVerified(hash, data, skipIfExists?)` | Streaming-receiver fast path: the caller asserts that `hash == SHA-256(data)` has already been verified incrementally. The log MUST NOT recompute the digest. Use only from `nearbytes-sync`'s receive sink; misuse silently corrupts the content-address namespace. Idempotent on same hash, including under concurrent writers. |
 | `retrieve(hash, { verifyIntegrity? = true })` | Read; if `verifyIntegrity`, run `validateBlockBytes`; delete and throw on mismatch. |
 | `has(hash)` | Existence check for canonical block path. |
 
@@ -48,6 +48,7 @@ Normative rules:
 2. `store(data, …)` MUST NOT accept a hash parameter. The log is the sole producer of the address.
 3. `storeAlreadyVerified` MUST be exposed but is **not** the default. It exists exclusively to avoid re-hashing during the `nearbytes-sync` streaming receive path; consumers of the log other than `nearbytes-sync` MUST use `store`.
 4. `retrieve` with `verifyIntegrity: true` (default) MUST recompute the digest and reject mismatches. Sync senders MAY pass `verifyIntegrity: false` when streaming a block to a peer because the receiver re-verifies on arrival.
+5. Block-on-disk commit MUST be safe under concurrent writers for the same hash. Implementations using a tmp-then-rename pattern MUST give each in-flight write a stream-unique scratch path (so two writers never share a tmp), MUST treat a populated `blocks/<hash>.bin` at commit time as success (drop the verified scratch), and MUST tolerate `ENOENT`/`EEXIST` on the atomic rename when the final path exists. Content-addressed bytes are a CRDT under identity merge: no file locks, no copies, no coordination are required. This rule is the storage realisation of `sync-protocol-v1.md` SYNC-37.
 
 ### 2.4 `ChannelPathMapper`
 
