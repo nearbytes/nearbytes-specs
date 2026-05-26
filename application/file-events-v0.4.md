@@ -40,7 +40,7 @@ Field rules:
 1. `path`, `fromPath`, `toPath` MUST satisfy the path grammar of §5.
 2. `blobHash` is the cleartext SHA-256 of the file content (see meta-storage spec).
 3. `encryptedKey` is the wrapped per-file key.
-4. `*At` are millisecond UTC timestamps; ties broken by §6 of the log-api spec.
+4. `*At` are millisecond UTC timestamps; see §2.5 for the clock model (wall-clock-sourced, ties broken by §6 of the log-api spec).
 5. `opts` is reserved: future versions MAY add an optional `opts: { ... }` map to any event for non-breaking extensions. v0.4 readers MUST tolerate an unknown `opts` map (ignore unknown keys, fail closed only on unknown verb).
 
 Removed in v0.4 (do not emit, do not honor):
@@ -48,6 +48,18 @@ Removed in v0.4 (do not emit, do not honor):
 - `DELETE_FILE` — replaced by `DELETE`.
 - `RENAME_FILE` — replaced by `RENAME`.
 - `CREATE_FILE.filename` — replaced by `CREATE_FILE.path`.
+
+### 2.5 Clock model
+
+Timestamps in v0.4 events are scalars on the wire but wall-clock-sourced at production. The split matters and is normative:
+
+1. **Encoding (universal).** `createdAt`, `deletedAt`, `renamedAt` MUST be integer milliseconds since the Unix epoch in UTC (i.e. the value of an unmodified `Date.now()` on a JavaScript host, or `time.time_ns() // 1_000_000` on Python). They MUST NOT carry a timezone, a UTC offset, an ISO-8601 string, or any other form; they are pure numbers and any two implementations agree on what a given integer means.
+2. **Source (local, uncorrected).** The producer MUST mint the timestamp from its local wall clock at the moment of authoring the event. Implementations MUST NOT silently rewrite, clamp, "fix up", or NTP-correct timestamps before signing; the signed value is exactly what the producer saw.
+3. **Total order is wall-clock-based.** The materializer total order is `(timestamp, log-position, eventHash)` per §6 of the log-api spec. This is **not** a causal order. Two producers whose clocks disagree by Δ can produce events whose `(timestamp, eventHash)` order does not match true wall-clock causality across machines, even when both producers observe the same local sequence of operations.
+4. **Determinism survives skew.** Any clock skew, however large, is absorbed by the deterministic total order: every replica that has observed the same set of events reconstructs the same `MaterializedFileSystem`. Skew can therefore reorder events relative to a human observer's intent but it cannot break convergence, the file-XOR-dir invariant, or the shadow-event audit trail. Cross-device disagreements caused by skew surface as ordinary §4 shadows on the timeline, not as undefined behavior.
+5. **No clock attestation.** The protocol does not include a signed clock anchor, a Lamport counter, or a Hybrid Logical Clock. Receivers MUST NOT reject events for "implausible" timestamps and MUST NOT use timestamp comparisons for liveness or freshness decisions; the timestamp is a sort key, nothing more.
+6. **Producer obligations.** Implementations SHOULD use a monotonic-friendly source where possible (e.g. on JavaScript, `Date.now()` is sufficient; on POSIX, `clock_gettime(CLOCK_REALTIME)` is sufficient — `CLOCK_MONOTONIC` MUST NOT be used because its epoch is process-local). A single producer MUST ensure timestamps within one process are non-decreasing in the order events are appended to its local log (it is acceptable to bump a freshly-minted `Date.now()` up to `lastEmittedAt + 1` to maintain this).
+7. **Future causal mode.** A future major version of the envelope MAY add a cleartext `parents: Hash[]` field; the file-events spec MAY then define a v0.5+ total order as "topological sort of the parent DAG, ties broken by event hash". The materializer and §4 conflict rules are written to be independent of how the total order is computed, so adopting causal order is a sort-key change rather than a semantic change. See `engineering/hash-evolution-v1.md` for the major-version migration policy.
 
 ## 3. Materializer
 
