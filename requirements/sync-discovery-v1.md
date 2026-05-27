@@ -17,6 +17,7 @@ Status: normative for `nearbytes-sync`.
 | DISC-10 | A sync node MUST join $\topic(\mathsf{profile}(p))$ for every served local profile $p$ (the set from `sync-protocol-v1.md` SYNC-00) **and** for every configured friend $f$. The topic set is the union $\{\,\topic(\mathsf{profile}(p)) : p \in \text{served}\,\} \cup \{\,\topic(\mathsf{profile}(f)) : f \in \text{friends}\,\}$. |
 | DISC-11 | Topic derivation MUST be `H("nearbytes:sync:v1" \|\| canonical(subject))`. |
 | DISC-12 | On an incoming Hyperswarm connection, the implementation MUST consult the connection's topic set (e.g. `peerInfo.topics` in the JS hyperswarm library). It MUST pick the local profile for the association as the first served profile $p$ whose $\topic(\mathsf{profile}(p))$ appears in that set; if no served profile matches (i.e. we are the *follower* on this association), the implementation MUST pick the **active** served profile (`NearbytesConfig.activeProfile`) and sign the handshake with it. |
+| DISC-13 | Hyperswarm `DiscoveredPeer.label` values MUST follow the transport-label grammar in `sync-observability-v1.md` OBS-30–OBS-33. Implementations MUST resolve `dht:<host>:<port>` from the underlying socket when possible rather than advertising only an opaque swarm public-key prefix. |
 
 ## 3. mDNS / DNS-SD
 

@@ -73,3 +73,19 @@ The terms *profile* and *identity* are not synonyms in this stack: a **profile**
 | SYNC-50 | Block fetches MUST be allowed to run in parallel across distinct peers/friends/siblings and across distinct blocks, subject to SYNC-14 (per-hash single-flight). The number of in-flight block streams per association is bounded by the implementation; the number of in-flight associations is bounded by the authorized set (friend ∪ sibling). |
 | SYNC-51 | Per-block hashing is single-thread SHA-256 (hardware-accelerated where available). Cross-block parallelism MUST come from concurrent in-flight blocks, not from intra-block tree hashing, as long as the file-level encoding splits files into individually addressable blocks below the single-thread SHA-256 budget (see `application/file-events-v0.3.md`). |
 | SYNC-52 | Senders MAY pump multiple block streams concurrently as long as each duplex serialises framed writes per SYNC-01; receivers MAY hash and persist them in parallel by routing each stream to an independent `BlockStoreApi.storeAlreadyVerified` call. |
+
+## 6. Handshake robustness
+
+| Rule | Requirement |
+|------|-------------|
+| SYNC-55 | Handshake failures classified as expected (timeout, race, policy) MUST be surfaced per `sync-observability-v1.md` OBS-40–OBS-43 and MUST NOT abort unrelated associations. |
+
+## 7. Bootstrap and recovery (open design)
+
+The steady-state path is reactive `have`/`want` driven by the reception journal (SYNC-10). The following items are **not** fully specified in v1; implementations MUST NOT assume they are solved:
+
+| Rule | Requirement |
+|------|-------------|
+| SYNC-60 | **New-machine recovery.** A fresh `dataDir` MUST be able to converge to the union of objects reachable from online friends without manual reindex steps. Today, cursor pagination over a locally empty reception journal can miss objects that exist on disk at a peer but are not re-advertised; this is under active redesign. |
+| SYNC-61 | **Set reconciliation vs steady-state.** Initial bulk catch-up MAY use a hash-set or Bloom-filter exchange, but steady-state sync MUST NOT depend on a mechanism that is coupled only to local arrival order. Any bootstrap optimisation MUST transition to the same `have`/`want` semantics as SYNC-10. |
+| SYNC-62 | Until SYNC-60 is resolved, operators moving to a new device SHOULD keep a reachable peer online with a complete store, use a long-lived sync engine on both sides during catch-up, and verify convergence with volume listing or timeline inspection—not merely peer presence in the monitor. |

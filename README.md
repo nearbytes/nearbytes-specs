@@ -10,6 +10,7 @@ Application-layer specs of the `nearbytes-app` UI live in `nearbytes-app/docs/sp
 - [`requirements/portability-v1.md`](requirements/portability-v1.md) — browser / Node / Pear runtime portability
 - [`requirements/sync-discovery-v1.md`](requirements/sync-discovery-v1.md) — friend & sibling carriage, dataDir-anchored node identity, singleton-sync/plural-writers split (DISC-26, DISC-27.1–27.4)
 - [`requirements/sync-protocol-v1.md`](requirements/sync-protocol-v1.md) — `nearbytes.sync.v1` framed message protocol
+- [`requirements/sync-observability-v1.md`](requirements/sync-observability-v1.md) — state beacon, event bus, transport labels, CLI monitor, operational modes
 - [`requirements/benchmark-methodology-v1.md`](requirements/benchmark-methodology-v1.md) — methodology for `nearbytes-benchmarks`
 
 ## Engineering
