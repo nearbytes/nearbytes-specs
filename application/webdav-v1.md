@@ -1,6 +1,8 @@
 # webdav-v1 — local HTTPS projection for FILES volumes
 
-Status: normative for `nearbytes-files` WebDAV adapter.
+Status: normative for transport, replay cache, and live-head write mapping.
+**REPL mount and auth** are superseded by `application/webdav-v2.md`.
+
 Design: `nearbytes-design/design/webdav-v1.md`.
 Package summary: `nearbytes-files/docs/specs/webdav-v1.md`.
 
