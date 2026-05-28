@@ -44,7 +44,7 @@ The terms *profile* and *identity* are not synonyms in this stack: a **profile**
 | SYNC-10 | After local `acceptData`, objects enter the reception journal; each append MUST push `have` to all open friend associations (no timer-driven polling). |
 | SYNC-11 | `want` is receiver-driven; senders MUST NOT send `data` without a prior `want`. |
 | SYNC-12 | When both blocks and events are missing from a `have`, the receiver MUST issue `want` for blocks before `want` for events (blocks-first ordering). |
-| SYNC-13 | `have` for events SHOULD include `blockRefs` when known so receivers can prioritize block fetches. |
+| SYNC-13 | `have` for events SHOULD include `blockRefs` when known so receivers can prioritize dependency fetches. Receivers MUST NOT assume every `blockRefs` hash is a block; application protocols may use visible refs for event parents as well as content blocks. |
 | SYNC-14 | At most one outstanding `want(H)` per block hash MUST exist across all associations sharing a local `Log`. On `have(H)` with `H` already in-flight (either reserved or actively streaming on some association), the receiver MUST suppress the duplicate `want`. The reservation MUST be released when the corresponding incoming stream finishes (stored, hash-mismatch, or already-local discard) or when the association holding the reservation closes; on release, a future `have(H)` from any peer is again eligible to `want`. This rule eliminates redundant bandwidth (the same content-addressed block arriving twice over disjoint transports) and the disk-commit race that follows from concurrent deliveries. |
 
 ## 3. Boot

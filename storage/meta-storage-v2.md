@@ -47,16 +47,16 @@ Specifically:
    - where blocks are copied,
    - which blocks are retained,
    - which blocks may be pruned.
-4. The only file-content metadata that may influence retention is metadata already written in cleartext inside event payloads.
+4. The only file-content metadata that may influence retention is metadata already written in visible event metadata, especially application-defined `blockRefs`.
 
 ## 3. Terms
 
 1. **Source**: a filesystem directory that may contain Nearbytes `blocks/` and `channels/` subtrees and is scanned for incoming data.
 2. **Volume ID**: lowercase hex public key used as the channel directory name.
 3. **Volume Destination**: a configured rule saying how one volume's event log and blocks are stored inside one source.
-4. **Durable Destination**: a destination that MUST retain all blocks referenced in cleartext by that volume's events for as long as the destination remains configured and enabled.
+4. **Durable Destination**: a destination that MUST retain all blocks referenced in visible metadata by that volume's events for as long as the destination remains configured and enabled.
 5. **Opportunistic Block**: a block present in a source but not currently protected by any durable destination policy for any volume.
-6. **Referenced Block**: a block hash that appears in cleartext in a volume event payload.
+6. **Referenced Block**: a block hash that appears in visible event metadata and is identified by the application protocol or local storage as a block dependency.
 7. **Prunable Replica**: a referenced block stored in a non-durable destination whose policy allows eviction when space runs low.
 
 ## 4. Source-Centric Model
@@ -178,16 +178,18 @@ Clarification:
 1. A source that is also a destination is sufficient to durably host a volume only if that destination stores events and blocks for the volume.
 2. Therefore, yes: a separate copy-only destination is not required when one destination/source already durably stores the volume's blocks.
 
-## 7. Referenced-Block Rule
+## 7. Referenced-Dependency Rule
 
-Retention decisions may only use cleartext block references already visible in event metadata.
+Retention decisions may only use cleartext dependency references already visible
+in event metadata. See `application/blockrefs-v0.1.md`.
 
 Normative rules:
 
-1. If a `CREATE_FILE` event includes a cleartext block hash, that block is a referenced block.
+1. If a `CREATE_FILE` event includes a cleartext hash that the application protocol identifies as a content block or manifest block, that object is a referenced block.
 2. The system MUST preserve referenced blocks according to destination policy.
 3. The system MUST NOT assume knowledge of encrypted inner structure that is not exposed in cleartext metadata.
-4. If only one manifest block hash is visible in cleartext, only that manifest block is meta-level trackable by this specification.
+4. The system MUST NOT assume that every `blockRefs` entry is a block; FILES v0.5 also uses event hashes as ordering parents.
+5. If only one manifest block hash is visible in cleartext, only that manifest block is meta-level trackable by this specification.
 
 ## 8. Space and Pruning Policy
 

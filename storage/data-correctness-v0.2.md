@@ -52,7 +52,7 @@ A file is valid in `channels/<volumeId>/` if and only if:
 3. `<eventHash>` equals SHA-256 of the canonical signed event bytes excluding only the signature field;
 4. the outer event signature verifies against the public key named in the event envelope;
 5. the signer public key in the event envelope matches `<volumeId>`;
-6. the visible `blockRefs` list is syntactically valid.
+6. the visible `blockRefs` list is syntactically valid. Correctness at this layer does not require classifying each ref as a block or event; that is application-level interpretation.
 
 ## 5. Decrypted Payload Correctness
 
@@ -60,7 +60,7 @@ Supported readers MAY apply additional decrypted validation after event-envelope
 
 Examples:
 
-1. file-command payloads MAY be checked against `application/file-events-v0.3.md`;
+1. file-command payloads MAY be checked against `application/file-events-v0.5.md`;
 2. app-record payloads MAY be checked against `application/app-records-v0.2.md`;
 3. chat and identity payloads MAY be checked against their own nested protocol specs.
 

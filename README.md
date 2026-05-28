@@ -28,7 +28,9 @@ Application-layer specs of the `nearbytes-app` UI live in `nearbytes-app/docs/sp
 
 ## Application
 
+- [`application/blockrefs-v0.1.md`](application/blockrefs-v0.1.md) — cleartext event `blockRefs` as application-level dependency references
 - [`application/file-events-v0.4.md`](application/file-events-v0.4.md) — file-volume event protocol (`CREATE_FILE`, `MKDIR`, `DELETE`, `RENAME`) and materializer cascade semantics
+- [`application/file-events-v0.5.md`](application/file-events-v0.5.md) — FILES semantic `blockRefs` and topological replay over observed log heads
 
 ## Registry
 
