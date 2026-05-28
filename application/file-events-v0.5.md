@@ -262,9 +262,31 @@ are v0.4-compatible but not fully v0.5-conformant.
 
 1. Emit the observed log head for every FILES event when the channel is non-empty.
 2. Emit direct predecessor event refs for exact-path entries updated by the event.
-3. Emit previous-content blocks for direct predecessor files.
+3. Emit previous content blocks for direct predecessor files.
 4. Emit introduced content blocks for `CREATE_FILE`.
 5. Do not emit descendant refs for directory cascades.
 6. Replay with parent-topological order and timestamp/event-hash tiebreaking.
 7. Resolve valid target conflicts as latest-wins in canonical replay order.
 8. Keep clear refs untyped; put role-rich metadata in ciphertext.
+
+## 11. In-Memory Channel Log (Conforming Runtimes)
+
+This section is normative for long-lived FILES runtimes (`nbf` REPL, WebDAV
+server in the same process). It does not change on-disk log format.
+
+1. After the first successful replay of a channel in a process, implementations
+   SHOULD retain **hydrated** `EventLogEntry` values in causal replay order until
+   the process exits or the channel is explicitly marked stale.
+2. Read APIs (`timeline`, directory listings, WebDAV `PROPFIND`/`GET`) SHOULD
+   use the retained log without re-reading every event file from storage.
+3. After a locally emitted event, implementations MUST append the hydrated entry
+   to the retained log and update materialized state without reloading the full
+   channel from storage.
+4. When storage may have been modified externally, implementations MUST refresh
+   before serving reads. Refresh SHOULD fetch and verify only event hashes not
+   already present in the retained log when the causal prefix is unchanged.
+5. Incremental materialization over an appended suffix MUST produce the same live
+   filesystem as full replay.
+
+Reference implementation: `FileService` replay cache, `loadFileReplayContext`,
+`extendFileReplayContext`, and `markReplayStale` in `nearbytes-files`.
