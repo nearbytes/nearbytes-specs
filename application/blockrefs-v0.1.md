@@ -105,6 +105,12 @@ Sync MAY include `blockRefs` in event announcements to let receivers prioritize
 fetches, but the receiver remains responsible for validating every fetched
 object by its own address and type.
 
+When an application treats a visible ref as an ordering parent (FILES v0.5:
+the first ref when `blockRefs.length > 1`), sync implementations MUST be able
+to fetch that parent explicitly even if the child event is already local
+(`requirements/sync-protocol-v1.md` SYNC-16–SYNC-17). Application replay MUST
+treat events whose ordering parent is missing as **pending**, not as roots.
+
 ## 6. Application Protocol Obligations
 
 Any application protocol that assigns semantics to `blockRefs` MUST specify:

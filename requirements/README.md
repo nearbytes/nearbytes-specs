@@ -20,4 +20,6 @@ Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-l
 - **OBS-01–OBS-15** — *Observability.* State beacon (`.nearbytes-sync.state.json`), LIVE/DAEMON/WRITER-ONLY modes, `nbsync status` / `probeSyncLock`.
 - **OBS-20–OBS-43** — *Event bus + handshake UX.* Wire events (`peer-connected`, `peer-connect-failed`, transfers), DHT `host:port` labels, classified handshake retries without stderr stack traces.
 - **OBS-50–OBS-54** — *Reference CLI.* `nbf peers`, `nbf monitor`, `nbf whoami`, flush budgets for one-shot writers when friends are configured.
-- **SYNC-60–SYNC-62** — *Open recovery design.* New-machine bootstrap and set-reconciliation coupling called out explicitly; operators should not assume fresh `dataDir` auto-heals without a reachable peer.
+- **SYNC-15** — *Mutual anti-entropy.* Every live association runs identical subscribe/delta/have/want/data logic on both sides; transport dial direction does not assign roles.
+- **SYNC-16–SYNC-17** — *Causal dependency repair.* After storing events/blocks and after each complete inbound `have` page, scan local orphans and issue explicit `want`s for missing parent events and content blocks named in visible `blockRefs`; serialized on the inbound queue, no timers.
+- **SYNC-60–SYNC-62** — *Open recovery design.* New-machine bootstrap and set-reconciliation coupling called out explicitly; operators should not assume fresh `dataDir` auto-heals without a reachable peer. SYNC-16–SYNC-17 mitigate out-of-order child-before-parent delivery but not full historical bootstrap.
