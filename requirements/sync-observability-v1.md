@@ -26,8 +26,8 @@ It complements `sync-discovery-v1.md` (DISC-27) and `sync-protocol-v1.md` (wire 
 |------|-------------|
 | OBS-10 | A running sync engine MUST publish `<dataDir>/.nearbytes-sync.state.json` at a fixed cadence (reference: 500 ms). The file MUST be written atomically (`*.tmp` then `rename`). |
 | OBS-11 | Beacon payload MUST be versioned JSON (`version: 1`). Readers MUST ignore beacons with unknown `version`. |
-| OBS-12 | Beacon fields MUST include at minimum: `pid`, `dataDir`, `updatedAt` (ISO-8601 UTC), `snapshot` (connected peer count, inflight counters), and `peers[]` (remote profile, remote peerId, transport label, role, connectedAt). |
-| OBS-13 | Beacon SHOULD include `peerId`, `activeProfilePublicKey`, `events[]` (recent wire events, oldest-first), and `stats` (throughput counters). Absence of optional fields MUST be treated as empty/zero, not as error (backward compatibility). |
+| OBS-12 | Beacon fields MUST include at minimum: `pid`, `dataDir`, `updatedAt` (ISO-8601 UTC), `snapshot` (connected peer count, inflight counters), and `peers[]` (remote profile, remote instance public key, transport label, role, connectedAt). |
+| OBS-13 | Beacon SHOULD include `peerId`, `instancePublicKey`, `activeProfilePublicKey`, `events[]` (recent wire events, oldest-first), and `stats` (throughput counters). Absence of optional fields MUST be treated as empty/zero, not as error for stale readers. |
 | OBS-14 | On graceful `stop()`, the sync engine MUST remove the beacon file. If the process crashes, the file MAY remain; readers MUST treat `updatedAt` older than a staleness threshold (reference: 5 s) as "beacon stale / daemon probably dead". |
 | OBS-15 | `nbsync status` and `nbf whoami` MUST report lock holder pid and dataDir when probing the lock, without acquiring it. |
 
@@ -38,7 +38,7 @@ It complements `sync-discovery-v1.md` (DISC-27) and `sync-protocol-v1.md` (wire 
 | OBS-20 | `start()` MUST own a `SyncEventBus` emitting wire-level observability events. Subscribers via `SyncHandle.onEvent()` MUST be notified without blocking the protocol (slow handlers MUST NOT stall sends/receives). |
 | OBS-21 | Event kinds (closed union, reference implementation): `peer-connected`, `peer-disconnected`, `peer-connect-failed`, `block-sent`, `block-received`, `event-received`. Each event carries `at` as epoch milliseconds. |
 | OBS-22 | A bounded ring buffer (reference: 256 events) MUST retain recent events for `SyncHandle.recentEvents()` and for mirroring into the state beacon. |
-| OBS-23 | `peer-connected` / `peer-disconnected` MUST include `remoteProfilePublicKey`, `remotePeerId`, `transportLabel`, and `role` (`sibling` \| `friend`). |
+| OBS-23 | `peer-connected` / `peer-disconnected` MUST include `remoteProfilePublicKey`, `remoteInstancePublicKey`, `transportLabel`, and `role` (`sibling` \| `friend`). |
 | OBS-24 | `block-sent`, `block-received`, and `event-received` MUST include byte counts and object identifiers sufficient for throughput aggregation (`stats`). |
 
 ## 4. Transport labels
@@ -65,9 +65,9 @@ Discovery backends MUST normalise endpoints into stable, parseable `transportLab
 
 | Rule | Requirement |
 |------|-------------|
-| OBS-50 | `nbf peers` MUST print a snapshot table: role, route (LAN / DHT / local), age, transport endpoint, optional wide peerId. |
+| OBS-50 | `nbf peers` MUST print a snapshot table: role, route (LAN / DHT / local), age, transport endpoint, peer id, and optional wide instance public key. |
 | OBS-51 | `nbf monitor` (alias `top`) MUST render a live panel when stdout is a TTY; in non-TTY environments it MUST fall back to a single `peers` snapshot. In REPL mode, monitor MUST use a sticky overlay so the command line remains usable. |
-| OBS-52 | `nbf whoami` MUST print local `peerId`, active profile public key, friend count, served profile count, sync mode (LIVE / DAEMON / WRITER-ONLY), and dataDir. |
+| OBS-52 | `nbf whoami` MUST print local peer id, local instance public key, active profile public key, friend count, served profile count, sync mode (LIVE / DAEMON / WRITER-ONLY), and dataDir. |
 | OBS-53 | Global flags `-m` / `--monitor` and `--debug` MUST be documented in `nbf --help` and REPL `help`. |
 | OBS-54 | One-shot mutating commands (`file add`, `file remove`, `profile publish`) that run without an active daemon MUST wait for at least one connected peer (when `friends` is non-empty) before exiting, with a WAN-friendly timeout (reference: 60 s when friends configured, 15 s otherwise). They MUST warn when no peer was found within the budget; local writes remain durable and sync later. |
 
