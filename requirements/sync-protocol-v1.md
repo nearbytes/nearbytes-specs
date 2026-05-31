@@ -53,7 +53,6 @@ The terms *profile* and *identity* are not synonyms in this stack: a **profile**
 | SYNC-19 | A receiver that sends `delta { mode: "global", cursor }` and consumes the resulting `have` pages MUST persist fetch progress on disk per remote endpoint. The cursor key MUST be `(remote profile public key, remote instance public key)`, not merely profile and not transport session id. |
 | SYNC-21 | On session attach, the initial global `delta` SHOULD use the stored cursor for that remote endpoint. After a complete `have` page is processed, the receiver MUST checkpoint fetch progress to `have.nextCursor` when present; when `have.more === false`, the receiver MUST mark the remote endpoint caught up at the last returned cursor. Checkpointing MUST happen only after local missing-object decisions and any emitted `want`s for that page have been enqueued. |
 | SYNC-22 | Fetch cursors index the **remote** peer's reception stream. They are independent of the local `sync/reception.jsonl`, which records objects accepted by this node. Cursor values are opaque strings; receivers MUST NOT derive ordering except by handing the value back to the same remote endpoint in a later `delta`. |
-| SYNC-23 | Before advertising or serving anti-entropy after startup, a filesystem-backed sync engine MUST repair its local reception journal from the storage inventory: every stored event under `channels/<profile>/<hash>.bin` and every stored block under `blocks/<hash>.bin` MUST have at least one reception entry. This repair MAY append missing entries to `sync/reception.jsonl`; it MUST be idempotent at the object-set level and MUST NOT require manual reindexing. This is the normative full historical bootstrap path for fresh devices: after both peers have repaired their local inventories, bounded `delta`/`have` pagination over the reception journal is sufficient to advertise the complete reachable store. |
 
 ## 3. Boot
 
@@ -90,10 +89,10 @@ The terms *profile* and *identity* are not synonyms in this stack: a **profile**
 
 ## 7. Bootstrap and recovery
 
-The steady-state path is reactive `have`/`want` driven by the reception journal (SYNC-10). Startup inventory repair (SYNC-23) makes the same mechanism sufficient for historical bootstrap; persistent fetch cursors (SYNC-19--SYNC-22) make interrupted pagination efficient across reconnects.
+The steady-state and bootstrap path is reactive `have`/`want` driven by each instance's durable reception journal (SYNC-10). Persistent fetch cursors (SYNC-19--SYNC-22) make interrupted pagination efficient across reconnects.
 
 | Rule | Requirement |
 |------|-------------|
-| SYNC-60 | **New-machine recovery.** A fresh `dataDir` that serves a profile and reaches at least one online friend or sibling with a complete store MUST converge to the union of objects advertised by that reachable peer without manual reindex steps. The reachable peer's sync engine MUST perform SYNC-23 before answering bootstrap `delta`s. |
+| SYNC-60 | **New-machine recovery.** A fresh `dataDir` that serves a profile and reaches at least one online friend or sibling whose reception journal contains the relevant history MUST converge to the objects advertised by that remote instance without manual reindex steps. The fresh receiver has no stored cursor for that `(remote profile, remote instance)` pair, so its initial `delta` starts at the beginning of that remote instance's durable reception stream. |
 | SYNC-61 | **Set reconciliation vs steady-state.** Initial bulk catch-up MAY later use hash-set, Bloom-filter, IBLT, Merkle-prefix, or other set-reconciliation optimisations, but steady-state sync MUST remain the same receiver-driven `have`/`want` semantics as SYNC-10. Any optimisation MUST be equivalent to advertising stored object refs and fetching missing hashes. |
 | SYNC-62 | Operators moving to a new device SHOULD still keep a reachable peer online until `have.more === false`, all emitted `want`s have drained, and application replay succeeds. Peer presence alone is not a proof of convergence; empty inflight queues plus successful file/timeline reads are. |
