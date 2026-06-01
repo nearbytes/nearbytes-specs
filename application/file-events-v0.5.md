@@ -277,8 +277,9 @@ server in the same process). It does not change on-disk log format.
 1. After the first successful replay of a channel in a process, implementations
    SHOULD retain **hydrated** `EventLogEntry` values in causal replay order until
    the process exits or the channel is explicitly marked stale.
-2. Read APIs (`timeline`, directory listings, WebDAV `PROPFIND`/`GET`) SHOULD
-   use the retained log without re-reading every event file from storage.
+2. Read APIs (`timeline`, directory listings including REPL `ls`, WebDAV
+   `PROPFIND`/`GET`) SHOULD use the retained log without re-reading every event
+   file from storage on each call when the cache is warm.
 3. After a locally emitted event, implementations MUST append the hydrated entry
    to the retained log and update materialized state without reloading the full
    channel from storage.

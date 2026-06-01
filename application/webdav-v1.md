@@ -103,10 +103,17 @@ NOT force a full channel reload from disk solely because of that write.
 
 ### 7.3 External changes
 
-When storage may have changed under another process (sync daemon, second CLI),
-implementations MUST refresh the in-memory log before serving stale state.
-Refresh SHOULD load and verify **only event hashes not already cached** when the
-causal ordered prefix is preserved.
+When storage may have changed under another process (sync daemon, second CLI,
+or the co-located sync engine writing into `channels/<pubkey>/`), implementations
+MUST refresh the in-memory log before serving stale state. Refresh SHOULD load
+and verify **only event hashes not already cached** when the causal ordered
+prefix is preserved.
+
+In a REPL that owns the sync engine, inbound `event-received` notifications MUST
+mark the matching channel's replay cache stale and refresh **open** volumes for
+that channel only (`volume-session-v1.md` §7). Content `block-received` events do
+not change the materialized file listing and MUST NOT trigger full replay of every
+open volume.
 
 ### 7.4 Equivalence
 
