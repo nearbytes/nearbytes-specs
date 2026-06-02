@@ -1,6 +1,8 @@
 # Nearbytes Specs
 
-Normative specifications for the clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-skeleton`, `nearbytes-files`, `nearbytes-chat`, `nearbytes-cli`).
+Normative specifications for the clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-skeleton`, `nearbytes-files`, `nearbytes-chat`, `nearbytes-engine`, `nearbytes-cli`, `nearbytes-app`).
+
+`nearbytes-engine` is the shared core reused by both the `nbf` terminal shell and the `nearbytes-app` UI shell — see [`engineering/engine-layering-v1.md`](engineering/engine-layering-v1.md).
 
 Application-layer specs of the `nearbytes-app` UI live in `nearbytes-app/docs/specs/`.
 
@@ -17,6 +19,7 @@ Application-layer specs of the `nearbytes-app` UI live in `nearbytes-app/docs/sp
 
 - [`engineering/typescript-conventions-v1.md`](engineering/typescript-conventions-v1.md) — TypeScript style and package rules (normative)
 - [`engineering/hash-evolution-v1.md`](engineering/hash-evolution-v1.md) — policy governing the SHA-256 content-address and conditions for evolving it (normative)
+- [`engineering/engine-layering-v1.md`](engineering/engine-layering-v1.md) — `nearbytes-engine` shared core; CLI and app as thin shells (normative)
 
 ## Storage and log
 
