@@ -6,7 +6,7 @@ Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-l
 |----------|--------|
 | [portability-v1.md](./portability-v1.md) | Browser, Node.js, and Pear runtime portability |
 | [sync-discovery-v1.md](./sync-discovery-v1.md) | Sync discovery layer (Hyperswarm + mDNS), friend / sibling carriage, dataDir-anchored peer and instance identity, singleton-sync / plural-writers split |
-| [sync-protocol-v1.md](./sync-protocol-v1.md) | `nearbytes.sync.v1` framed anti-entropy protocol (`have` / `want` / `data`, single-flight, hash-set delta, blocks-first ordering) |
+| [sync-protocol-v1.md](./sync-protocol-v1.md) | `nearbytes.sync.v1` framed anti-entropy protocol (`have` / `want` / `data`, local resume walk, `fromCursor` resume pages vs push hints, single-flight, blocks-first ordering) |
 | [sync-observability-v1.md](./sync-observability-v1.md) | State beacon, in-process event bus, transport labels, handshake failure UX, reference CLI (`nbf peers` / `monitor` / `whoami`) |
 | [benchmark-methodology-v1.md](./benchmark-methodology-v1.md) | Methodology for `nearbytes-benchmarks` (warm-cache loopback, $n{=}10$ medians, etc.) |
 
@@ -21,7 +21,7 @@ Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-l
 - **OBS-20–OBS-43** — *Event bus + handshake UX.* Wire events (`peer-connected`, `peer-connect-failed`, transfers), DHT `host:port` labels, classified handshake retries without stderr stack traces.
 - **OBS-50–OBS-54** — *Reference CLI.* `nbf peers`, `nbf monitor`, `nbf whoami`, flush budgets for one-shot writers when friends are configured.
 - **SYNC-15** — *Mutual anti-entropy.* Every live association runs identical subscribe/delta/have/want/data logic on both sides; transport dial direction does not assign roles.
-- **SYNC-16–SYNC-17** — *Causal dependency repair.* After storing events/blocks and after each complete inbound `have` page, scan local orphans and issue explicit `want`s for missing parent events and content blocks named in visible `blockRefs`; serialized on the inbound queue, no timers.
+- **SYNC-16–SYNC-17** — *Causal dependency repair.* After storing events/blocks and after the local resume walk completes, scan local orphans and issue explicit `want`s for missing parent events and content blocks named in visible `blockRefs`; serialized on the inbound queue, no timers.
 - **SYNC-18** — *Quiet block serving.* A sender that lacks a wanted block simply does not stream it and does not emit an error stack; absence is normal for partial replicas.
-- **SYNC-19–SYNC-22** — *Persistent fetch cursors.* Receivers persist per-remote profile@instance cursors into that remote instance's reception stream, so reconnects and fresh devices resume or bootstrap from the correct durable history.
-- **SYNC-60–SYNC-62** — *New-machine recovery.* Full bootstrap is driven by remote instance reception pagination plus ordinary `have`/`want`; content-addressed block storage is not scanned as sync history.
+- **SYNC-19–SYNC-22** — *Persistent fetch cursors and local resume walk.* Receivers persist per-remote profile@instance cursors and drive catch-up by sending outbound `delta` pages locally. Only resume `have` answers tagged with `fromCursor` advance pagination; unsolicited push `have` (tail announce, live hints) may drive `want` only.
+- **SYNC-60–SYNC-62** — *New-machine recovery.* Full bootstrap is driven by the local resume walk over the remote instance reception stream plus ordinary `have`/`want`; content-addressed block storage is not scanned as sync history.
