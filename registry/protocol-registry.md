@@ -45,7 +45,7 @@ Examples:
 | `nb.join.v1` | Space join link carrying attachment recipes | `v1` | Draft |
 | `nb.identity.record.v1` | Public signed sender identity record | `v1` | Draft |
 | `nb.identity.snapshot.v1` | Identity snapshot plus canonical-channel reference | `v1` | Draft |
-| `nb.chat.message.v1` | Identity-signed chat message payload | `v1` | Draft |
+| `nb.chat.message.v1` | Hub-scoped chat message app record payload | `v1` | Draft |
 | `nb.manifest.v1` | Plaintext chunk manifest schema (encrypted at rest) | `v1` | Draft |
 | `nb.content.single.v1` | Single-block encrypted file descriptor | `v1` | Draft |
 | `nb.content.manifest.v1` | Encrypted-manifest file descriptor | `v1` | Draft |
@@ -60,10 +60,11 @@ Current examples:
 2. file command semantics -> `application/file-commands-v0.2.md`
 3. visible event dependency refs -> `application/blockrefs-v0.1.md`
 4. file event/replay model -> `application/file-events-v0.4.md`, extended by `application/file-events-v0.5.md`
-5. local WebDAV projection for FILES -> `application/webdav-v1.md`
-6. identity management command semantics -> `identity/identity-management-v0.2.md`
-7. LAN sync transport family -> `transport/lan-sync-v0.4.md`
-8. LAN storage-command family -> `transport/storage-commands-v0.1.md`
+5. hub-scoped chat record model -> `application/chat-v1.md`
+6. local WebDAV projection for FILES -> `application/webdav-v1.md`, extended by `application/webdav-v2.md`
+7. identity management command semantics -> `identity/identity-management-v0.2.md`
+8. LAN sync transport family -> `transport/lan-sync-v0.4.md`
+9. LAN storage-command family -> `transport/storage-commands-v0.1.md`
 
 ## 5. Provisional Stack View
 

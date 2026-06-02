@@ -1,15 +1,15 @@
 # volume-session-v1 — registered volumes, retention, and REPL session
 
-Status: normative target for `nearbytes-files` REPL.
+Status: normative target for the `nearbytes-cli` REPL.
 Design: `nearbytes-design/design/volume-session-v1.md`.
 Normative cross-repo: `nearbytes-specs/application/volume-session-v1.md`.
 
 ## 1. Scope
 
-This document specifies how the `nbf` REPL registers file volumes (channel
-secrets), which volumes appear in a session, and how that set is persisted
-under `dataDir`. It does not define FILES event semantics; see
-`file-events-v0.5.md`.
+This document specifies how the `nbf` REPL registers hub/volume channel
+secrets, which hubs appear in a session, and how that set is persisted under
+`dataDir`. It does not define FILES event semantics; see `file-events-v0.5.md`.
+It does not define chat semantics; see `chat-v1.md`.
 
 WebDAV exposure of registered volumes is defined in `webdav-v2.md`.
 

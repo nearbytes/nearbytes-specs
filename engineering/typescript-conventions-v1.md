@@ -2,7 +2,7 @@
 
 **Status:** normative for all packages under `nearbytes/nearbytes-*` except `nearbytes-app`.  
 **Version:** 1.0  
-**Applies to:** `nearbytes-crypto`, `nearbytes-log`, `nearbytes-files`, `nearbytes-skeleton`.
+**Applies to:** `nearbytes-crypto`, `nearbytes-log`, `nearbytes-files`, `nearbytes-chat`, `nearbytes-cli`, `nearbytes-skeleton`.
 
 ---
 
@@ -55,7 +55,7 @@ These rules define how clean-code packages are written so they stay minimal, typ
 | LAY-02 | `src/index.ts` is a thin barrel: re-exports only, no logic. |
 | LAY-03 | Implementation details under `src/internal/` MUST NOT be exported from the package root. |
 | LAY-04 | Environment-specific code (Node `fs`) lives under `src/impl/` or `src/internal/`, not in protocol modules. |
-| LAY-05 | Package dependency direction (acyclic): `crypto` ← `log` ← `files` / `skeleton`; `storage` is path-only and must not depend on `log`. |
+| LAY-05 | Package dependency direction (acyclic): `crypto` ← `log` ← `files` / `chat` / `skeleton` ← `cli`; `storage` is path-only and must not depend on `log`. |
 
 ---
 

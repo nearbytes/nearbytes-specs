@@ -1,6 +1,6 @@
 # Sync observability and operations v1
 
-Status: normative for `nearbytes-sync`, `nearbytes-skeleton`, and the reference file CLI (`nearbytes-files` / `nbf`).
+Status: normative for `nearbytes-sync`, `nearbytes-skeleton`, and the reference CLI (`nearbytes-cli` / `nbf`).
 
 This document specifies how operators observe a running sync engine, how a writer-only CLI coexists with a daemon, and how connection failures are surfaced without stalling the wire protocol.
 
@@ -69,7 +69,7 @@ Discovery backends MUST normalise endpoints into stable, parseable `transportLab
 | OBS-51 | `nbf monitor` (alias `top`) MUST render a live panel when stdout is a TTY; in non-TTY environments it MUST fall back to a single `peers` snapshot. In REPL mode, monitor MUST use a sticky overlay so the command line remains usable. |
 | OBS-52 | `nbf whoami` MUST print local peer id, local instance public key, active profile public key, friend count, served profile count, sync mode (LIVE / DAEMON / WRITER-ONLY), and dataDir. |
 | OBS-53 | Global flags `-m` / `--monitor` and `--debug` MUST be documented in `nbf --help` and REPL `help`. |
-| OBS-54 | One-shot mutating commands (`file add`, `file remove`, `profile publish`) that run without an active daemon MUST wait for at least one connected peer (when `friends` is non-empty) before exiting, with a WAN-friendly timeout (reference: 60 s when friends configured, 15 s otherwise). They MUST warn when no peer was found within the budget; local writes remain durable and sync later. |
+| OBS-54 | One-shot mutating commands (`file add`, `file remove`, `profile publish`, `say`) that run without an active daemon MUST wait for at least one connected peer (when `friends` is non-empty) before exiting, with a WAN-friendly timeout (reference: 60 s when friends configured, 15 s otherwise). They MUST warn when no peer was found within the budget; local writes remain durable and sync later. |
 
 ## 7. Throughput statistics
 

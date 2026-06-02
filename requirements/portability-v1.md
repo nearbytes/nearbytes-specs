@@ -4,7 +4,7 @@ Status: normative for clean-code repositories.
 
 ## 1. Scope
 
-Applies to `nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-files` (library surface), and shared types. Does not apply to `nearbytes-app`.
+Applies to `nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-files` (library surface), `nearbytes-chat`, `nearbytes-cli` (Node CLI surface), and shared types. Does not apply to `nearbytes-app`.
 
 ## 2. Runtime targets
 

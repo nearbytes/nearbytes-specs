@@ -1,6 +1,6 @@
 # Nearbytes engineering requirements
 
-Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-skeleton`, `nearbytes-files`, `nearbytes-specs`).
+Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-log`, `nearbytes-sync`, `nearbytes-skeleton`, `nearbytes-files`, `nearbytes-chat`, `nearbytes-cli`, `nearbytes-specs`).
 
 | Document | Scope |
 |----------|--------|
@@ -13,7 +13,7 @@ Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-l
 ## Highlights of recent rule evolution
 
 - **DISC-26–DISC-29** — `dataDir`-anchored peer and instance identity: `peerId` remains the short stable diagnostic/transport id, while the per-storage-root P-256 instance keypair is used for loopback, session keys, and cursor keys.
-- **DISC-27.1** — *Singleton sync, plural writers.* The exclusive `dataDir` lock protects the *sync engine*, not the writer slot; a side-effect-free `probeSyncLock(dataDir)` API lets writer-only consumers (the file CLI, scripts) detect an active daemon and downgrade to writer-only mode instead of contending.
+- **DISC-27.1** — *Singleton sync, plural writers.* The exclusive `dataDir` lock protects the *sync engine*, not the writer slot; a side-effect-free `probeSyncLock(dataDir)` API lets writer-only consumers (`nearbytes-cli`, scripts) detect an active daemon and downgrade to writer-only mode instead of contending.
 - **DISC-27.2** — *Crash-safe lock.* Lock files encode the holder pid + creation timestamp; stale locks held by dead pids are silently reclaimed.
 - **DISC-27.3** — *Concurrent writes are CRDT-trivial.* Content-addressed publish uses `write→link(2)→unlink(tmp)` with a unique per-write tmp suffix; concurrent writers see `EEXIST` and treat it as success (bytes identical by content-address argument). Filesystems without hardlink support fall back to `rename(2)`.
 - **DISC-27.4** — *Cross-process write propagation.* A running sync engine watches `dataDir` (inotify / FSEvents / ReadDirectoryChangesW or an equivalent abstraction) and appends a reception entry for each newly-observed file, so cross-process writes are indistinguishable on the wire from sync-engine-authored writes.

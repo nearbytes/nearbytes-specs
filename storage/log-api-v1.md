@@ -63,7 +63,7 @@ Normative rules:
 | `loadEventLog(channel, log, crypto)` | List + retrieve + hydrate all channel events; sort by `eventHash` |
 | `verifyEventLog(entries, channel, crypto)` | Verify envelope signatures against `channel.publicKey` |
 
-Replay is **generic event sourcing**: it does not interpret inner payloads. Domain packages (e.g. `nearbytes-files`) project replayed entries into file state, chat timelines, etc.
+Replay is **generic event sourcing**: it does not interpret inner payloads. Domain packages (e.g. `nearbytes-files`, `nearbytes-chat`) project replayed entries into file state, chat timelines, etc.
 
 ---
 
