@@ -64,6 +64,17 @@ Canonical source layout remains:
   channels/<volumeId>/<eventHash>.bin
 ```
 
+Derived, non-authoritative materialized state is kept separately under the data
+root and is never a source of truth (it can be deleted and rebuilt by full
+re-materialization — `storage/projection-engine-v1.md` §6.4):
+
+```text
+<dataDir>/.nearbytes/
+  ui-state.json            # session UX (active hub)
+  files.sqlite3            # FILES projection: order index, live state, snapshots
+  chat.sqlite3             # CHAT projection: order index, live state, snapshots, meta KV
+```
+
 ## 5. Durable Volume Guarantee
 
 For every configured volume, at least one enabled writable destination MUST durably retain:

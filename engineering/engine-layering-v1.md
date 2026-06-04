@@ -17,8 +17,13 @@ nearbytes-engine   ← shared core: runtime, sync, config, file & chat operation
 
 - **ENG-1.1** `nearbytes-engine` MUST contain all logic that is not
   argument parsing, command bookkeeping, or result rendering: skeleton boot,
-  the reactive-volume cache, filesystem watchers, sync inbound-refresh, and the
-  high-level profile / hub / friend / file / chat / status operations.
+  the reactive-volume cache, filesystem watchers, and the high-level profile /
+  hub / friend / file / chat / status operations. Replay, materialization,
+  persistence, and inbound-event projection are NOT engine logic — they live in
+  the projection engine (`storage/projection-engine-v1.md`) and the per-protocol
+  projectors in `nearbytes-files` / `nearbytes-chat`. The engine only **wires**
+  protocol instances and **exposes** their APIs; it MUST NOT re-implement chat
+  timeline reads, replay caches, or per-shell inbound-sync policies.
 - **ENG-1.2** `nearbytes-engine` MUST NOT depend on terminal, Electron, DOM, or
   any rendering concern. It depends only on the protocol packages
   (`nearbytes-skeleton`, `nearbytes-files`, `nearbytes-chat`, `nearbytes-crypto`,
@@ -29,13 +34,27 @@ nearbytes-engine   ← shared core: runtime, sync, config, file & chat operation
 
 ## Surface (ENG-2)
 
-- **Runtime core** (ported verbatim from the CLI's former `cli/context.ts`):
-  `createEngineRuntime`, `openAndWatch`, `reloadVolumeFromDisk`, `refreshIfOpen`,
-  `closeVolume`, `attachSyncInboundRefresh`, and the `EngineRuntime` type.
+- **Runtime core**: `createEngineRuntime`, `openAndWatch`, `refreshIfOpen`,
+  `closeVolume`, and the `EngineRuntime` type. The runtime opens the
+  `MaterializedStore` databases (`files.sqlite3`, `chat.sqlite3`), builds the
+  files engine + chat service over them, and wires the log router so both
+  receive pushes. Inbound-sync refresh is NOT engine code; new events flow
+  through the log router into the projectors (`projection-engine-v1.md` §3, §7).
 - **Operations**: the `NearbytesEngine` class with profile/hub/friend/file/chat
   methods and a change stream `on(listener)` emitting `status` / `volume` /
-  `chat` events. The CLI renders these as text; the app pushes them to the
-  renderer over IPC.
+  `chat` events. Its file/chat methods MUST delegate to (expose) the files/chat
+  APIs, not re-derive timelines or replay. The CLI renders these as text; the app
+  pushes them to the renderer over IPC.
+
+## Sync and projection (ENG-5)
+
+- **ENG-5.1** There MUST be exactly one inbound-sync policy across shells: the log
+  router pushes newly persisted events to the files/chat projectors. Shells MUST
+  NOT add a second policy (no app-only `refreshActive` full reread, no blunt
+  reload-all of open volumes).
+- **ENG-5.2** On boot the engine MUST bucket new events by channel and ingest them
+  volume-by-volume (`projection-engine-v1.md` §7), not one event at a time across
+  volumes.
 
 ## Consumption (ENG-3)
 

@@ -23,7 +23,8 @@ Application-layer specs of the `nearbytes-app` UI live in `nearbytes-app/docs/sp
 
 ## Storage and log
 
-- [`storage/log-api-v1.md`](storage/log-api-v1.md) — `Log` / `EventLogApi` / `BlockStoreApi` (normative)
+- [`storage/log-api-v1.md`](storage/log-api-v1.md) — `Log` / `EventLogApi` / `BlockStoreApi` + push router (normative)
+- [`storage/projection-engine-v1.md`](storage/projection-engine-v1.md) — log router + order-agnostic projection engine; per-protocol projectors; logarithmic snapshots; `MaterializedStore` / SQLite persistence (normative)
 - [`storage/data-correctness-v0.2.md`](storage/data-correctness-v0.2.md) — hash integrity on disk
 - [`storage/meta-storage-v0.3.md`](storage/meta-storage-v0.3.md) — root layout
 - [`storage/meta-storage-v2.md`](storage/meta-storage-v2.md) — discovery marker, multi-root (app layer)

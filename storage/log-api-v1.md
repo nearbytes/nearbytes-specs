@@ -1,7 +1,7 @@
 # Log API (normative)
 
 **Status:** normative  
-**Version:** 1.1  
+**Version:** 1.2  
 **Implementation:** `nearbytes-log`
 
 ---
@@ -29,9 +29,27 @@ interface Log {
 
 | Method | Semantics |
 |--------|-----------|
-| `storeEvent(publicKey, signedEvent)` | Persist event; return content-address `SHA-256(serializeEventEnvelope(envelope))`. Idempotent on same hash. |
+| `storeEvent(publicKey, signedEvent)` | Persist event; return content-address `SHA-256(serializeEventEnvelope(envelope))`. Idempotent on same hash. MUST notify matching router subscribers (§2.6) after a successful persist. |
 | `retrieveEvent(publicKey, eventHash)` | Load, `validateEventBytes`, verify signature; delete file and throw on failure. |
 | `listEvents(publicKey)` | List event hashes in channel directory; ignore non-`<64-hex>.bin` names. |
+| `subscribe(filter, sink)` | Register a push sink for newly persisted events (see §2.6 and `storage/projection-engine-v1.md` §3). Returns an unsubscribe handle. |
+
+### 2.6 Push routing
+
+The log is the single persistence choke point for new events (local `storeEvent`
+and the `nearbytes-sync` receive path). It exposes a push router so consumers
+receive new events incrementally without re-listing the channel directory:
+
+```ts
+subscribe(
+  filter: { channel?: PublicKeyHex; protocols?: ReadonlySet<string> },
+  sink: (entries: EventLogEntry[]) => void,
+): () => void;
+```
+
+Routing is normative in `storage/projection-engine-v1.md` §3 (PROJ-1). The router
+is key-agnostic and pushes raw `EventLogEntry` values; domain projection and
+decryption happen above the log.
 
 ### 2.3 `BlockStoreApi`
 
@@ -63,7 +81,7 @@ Normative rules:
 | `loadEventLog(channel, log, crypto)` | List + retrieve + hydrate all channel events; sort by `eventHash` |
 | `verifyEventLog(entries, channel, crypto)` | Verify envelope signatures against `channel.publicKey` |
 
-Replay is **generic event sourcing**: it does not interpret inner payloads. Domain packages (e.g. `nearbytes-files`, `nearbytes-chat`) project replayed entries into file state, chat timelines, etc.
+Replay is **generic event sourcing**: it does not interpret inner payloads. Domain packages (e.g. `nearbytes-files`, `nearbytes-chat`) project replayed entries into file state, chat timelines, etc., through the order-agnostic projection engine defined in `storage/projection-engine-v1.md`. `loadEventLog` remains the cold-start full read; warm/incremental replay is the projection engine's push path.
 
 ---
 

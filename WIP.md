@@ -277,3 +277,24 @@ Today’s engine **couples** unrelated paths by refusing to merge until `observe
 ---
 
 *Last updated: 2026-06-04 — materialization philosophy: apply events as we have them; partial → total over time; no causal wait.*
+
+---
+
+## 10. Resolution — projection engine (2026-06-04)
+
+§§2–8 are superseded by the normative `storage/projection-engine-v1.md` and the
+design note `nearbytes-design/design/projection-engine-v1.md`. Replay becomes a
+**push** architecture with two shared cores in `nearbytes-log` — a log router
+(`subscribe(filter, sink)`) and an **order-agnostic** projection engine — plus
+per-protocol **projectors** (`reorder` + `reduce` + key + state codec) in
+`nearbytes-files` (`nb.files.v0.5`, ordered/causal) and `nearbytes-chat`
+(`nb.chat.v1`). Ordering is the protocol's concern, never the log's/engine's: a
+total order is one projector's policy. Materialized state, the order index, and a
+**logarithmic snapshot ladder** (day/week/month) persist via a `MaterializedStore`
+(`files.sqlite3` / `chat.sqlite3` under `dataDir/.nearbytes/`, `node:sqlite`),
+deletable and rebuildable by full re-materialization. `nearbytes-engine` becomes
+dumb wiring that exposes the files/chat APIs and boot-buckets new events per
+volume; the blunt `attachSyncInboundRefresh` reload-all, the app `refreshActive`
+full reread, and `chatPush.ts` are removed in favour of one router-driven push
+policy. Full replay happens only on first access of a channel with no persisted
+state.

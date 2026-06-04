@@ -49,6 +49,8 @@ Examples:
 | `nb.manifest.v1` | Plaintext chunk manifest schema (encrypted at rest) | `v1` | Draft |
 | `nb.content.single.v1` | Single-block encrypted file descriptor | `v1` | Draft |
 | `nb.content.manifest.v1` | Encrypted-manifest file descriptor | `v1` | Draft |
+| `nb.files.v0.5` | FILES projection-engine projector id (order index / live state / snapshots namespace) | `v0.5` | Draft |
+| `nb.chat.v1` | CHAT projection-engine projector id (order index / live state / snapshots / meta KV namespace) | `v1` | Draft |
 
 ## 4. Spec Families Without Standalone `nb.*` IDs
 
@@ -61,6 +63,7 @@ Current examples:
 3. visible event dependency refs -> `application/blockrefs-v0.1.md`
 4. file event/replay model -> `application/file-events-v0.4.md`, extended by `application/file-events-v0.5.md`
 5. hub-scoped chat record model -> `application/chat-v1.md`
+10. log routing + order-agnostic projection engine -> `storage/projection-engine-v1.md`
 6. local WebDAV projection for FILES -> `application/webdav-v1.md`, extended by `application/webdav-v2.md`
 7. identity management command semantics -> `identity/identity-management-v0.2.md`
 8. LAN sync transport family -> `transport/lan-sync-v0.4.md`
@@ -79,7 +82,10 @@ The Nearbytes specifications already imply several layers, even though the full 
 7. blob/reference layer
 8. storage/transport/sync layer
 
-The ordering/replay layer is currently the least settled part of the stack and should be considered non-final.
+The ordering/replay layer is specified by `storage/projection-engine-v1.md`:
+ordering is an application-protocol concern (per-projector `reorder`), and the
+log/engine cores are order-agnostic. Replay is push-based, incremental, and
+persisted via a `MaterializedStore`.
 
 ## 6. Forward Compatibility Rule For Transport Recipes
 

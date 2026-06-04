@@ -78,13 +78,25 @@ version or a separately specified envelope.
 
 ## 5. Replay
 
-Readers build a hub chat timeline by:
+Chat replay is realized through the projection engine of
+`storage/projection-engine-v1.md` as the chat projector (`id = nb.chat.v1`). The
+projection step for each event is:
 
-1. loading the hub channel event log;
-2. selecting `APP_RECORD` payloads whose `protocol` is `nb.chat.message.v1`;
-3. parsing the nested `record`;
-4. verifying the nested record signature;
-5. sorting by `publishedAt`, then event hash as deterministic tiebreak.
+1. select `APP_RECORD` (or legacy `CHAT_MESSAGE`) payloads whose protocol is
+   `nb.chat.message.v1`;
+2. parse the nested `record`;
+3. verify the nested record signature;
+4. project into the timeline ordered by `publishedAt`, then event hash as
+   deterministic tiebreak.
+
+Ordering here is the **chat protocol's** choice, not the engine's: chat is an
+ordered projector whose `reorder` sorts by `(publishedAt, eventHash)`. The engine
+itself imposes no order. The chat projector's persisted meta KV records the
+last-seen event hash (the chat "blockref": the most recent message observed, and
+the message a reply refers to). Live timeline, order index, and snapshots persist
+to a `MaterializedStore` (reference: `chat.sqlite3` under `dataDir/.nearbytes/`),
+so reads serve from persisted state without re-listing the channel; full replay
+happens only on first access of a channel with no persisted state.
 
 Malformed or unsupported records MUST NOT mutate any file state and SHOULD be
 ignored or surfaced as invalid application records by user interfaces.

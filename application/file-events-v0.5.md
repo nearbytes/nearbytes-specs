@@ -269,25 +269,35 @@ are v0.4-compatible but not fully v0.5-conformant.
 7. Resolve valid target conflicts as latest-wins in canonical replay order.
 8. Keep clear refs untyped; put role-rich metadata in ciphertext.
 
-## 11. In-Memory Channel Log (Conforming Runtimes)
+## 11. Projection And Persistence (Conforming Runtimes)
 
-This section is normative for long-lived FILES runtimes (`nbf` REPL, WebDAV
-server in the same process). It does not change on-disk log format.
+FILES replay is realized through the order-agnostic projection engine defined in
+`storage/projection-engine-v1.md`. FILES is an **ordered** projector
+(`id = nb.files.v0.5`): its `reorder` is the §5 canonical topological merge over
+observed-log-head parents with the §5 timestamp/event-hash tiebreak, returning
+the earliest changed index as `insertAt`; its `reduce` is §6 materialization.
+This section does not change the on-disk log format.
 
-1. After the first successful replay of a channel in a process, implementations
-   SHOULD retain **hydrated** `EventLogEntry` values in causal replay order until
-   the process exits or the channel is explicitly marked stale.
-2. Read APIs (`timeline`, directory listings including REPL `ls`, WebDAV
-   `PROPFIND`/`GET`) SHOULD use the retained log without re-reading every event
-   file from storage on each call when the cache is warm.
-3. After a locally emitted event, implementations MUST append the hydrated entry
-   to the retained log and update materialized state without reloading the full
-   channel from storage.
-4. When storage may have been modified externally, implementations MUST refresh
-   before serving reads. Refresh SHOULD fetch and verify only event hashes not
-   already present in the retained log when the causal prefix is unchanged.
-5. Incremental materialization over an appended suffix MUST produce the same live
-   filesystem as full replay.
+1. The FILES projector's order key is the per-event ordering data — event hash,
+   observed-log-head parent (`blockRefs[0]` for FILES verbs), FILES timestamp, and
+   whether the event is a FILES verb. The engine persists this order index so a
+   new event's insertion point is computed without rehydrating payloads.
+2. Live materialized state, the order index, and logarithmic snapshots persist to
+   a `MaterializedStore` (reference: `files.sqlite3` under `dataDir/.nearbytes/`).
+   After a process restart, read APIs (`timeline`, directory listings including
+   REPL `ls`, WebDAV `PROPFIND`/`GET`) MUST serve from persisted live state
+   without re-reading every event file.
+3. After a locally emitted event, and after each inbound event, the engine MUST
+   fold the affected ordered suffix onto live state and persist, without reloading
+   the full channel from storage.
+4. When new events arrive (local, sync, or boot bucketing per
+   `projection-engine-v1.md` §7), the projector's `reorder` determines whether the
+   merge is a pure append (forward fold) or an insertion before the live position
+   (replay from the nearest snapshot with `position ≤ insertAt`).
+5. Incremental materialization over the folded suffix MUST produce the same live
+   filesystem as full replay (`projection-engine-v1.md` PROJ-2.3).
+6. Full materialization happens only on first access of a channel with no
+   persisted state (`projection-engine-v1.md` §6.4).
 
-Reference implementation: `FileService` replay cache, `loadFileReplayContext`,
-`extendFileReplayContext`, and `markReplayStale` in `nearbytes-files`.
+Reference implementation: `filesProjector` and the projection-engine-backed
+`FileService` in `nearbytes-files`.
