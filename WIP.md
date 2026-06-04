@@ -191,22 +191,57 @@ Shells (CLI, app) call protocols directly or through a thin coordinator — not 
 4. Slow: `markReplayStale` + `getReplayContext` — `newHashes` on disk minus cache.
 5. Re-sort merged log (`orderEventLogEntries` over `blockRefs` DAG).
 6. Prefix OK → materialize tail only; else full channel replay.
-7. CLI: engine reloads **all** open hubs every sync event.
+7. CLI: channel-scoped inbound refresh via `syncInboundRefresh.ts` (since c0dd6d4).
 8. App: `refreshActive` on **active hub** only + full chat reread.
 9. Chat bulk reads: always full `loadEventLog`; push path is per-event.
 10. Replay implementation: **nearbytes-files**; engine orchestrates only.
 
 ---
 
-## 8. Related commits (pushed `main`)
+## 8. Inbound sync: open volumes, `block-received`, and `blockRefs` (open question)
+
+### What the code does today (`syncInboundRefresh.ts`)
+
+**Why only open volumes?** Replay/materialization is expensive and only needed where this process holds a live `ReactiveVolume` (REPL `volume use`, app active hub). Registered-but-not-open hubs are skipped — nothing is reading them.
+
+**On `block-received`:** reload every **open** volume (`markReplayStale` → disk diff → rematerialize). Rationale in code/comments: blocks often arrive **before** the event is complete, or an earlier `event-received` was skipped; new blobs on disk may unblock replay. This is a conservative catch-all, not a precise dependency walk.
+
+**On `event-received`:** `inboundEventReadyToMaterialize` loads the signed event and inspects **`blockRefs`** (hashes in the envelope: causal parent / prior event, plus content block hashes for blobs introduced by this event). “**Local**” means:
+
+- Parent / head ref is already in the channel event list, **or** (when refs length is 1) that hash exists as a block on disk; and  
+- Any other refs that are **not** already known events must exist as blocks (`log.blocks.has` or file under `dataDir`).
+
+If not local → **return without applying** (no queue; a later sync event may retry).
+
+### Why this may be wrong (Vincenzo, 2026-06-04)
+
+> If an event says “update file X, now it contains Y”, I don’t need **Y** to know the **current state of X** — the opposite: even if I already have blob **Y** on disk, that doesn’t help until the **event** is applied; and once the event is applied, **Y** is only needed when someone **reads bytes**, not for listing the tree.
+
+**Agree for FILES metadata replay:**
+
+- `CREATE_FILE` / `DELETE` / `RENAME` / `MKDIR` materialization uses the **decrypted event payload** (path, `blobHash`, wrapped key, timestamps). The materializer does **not** read blob plaintext to update `MaterializedFileSystem.files`.
+- So **waiting for content block Y** before `applyInboundEvent` delays **`ls` / timeline / WebDAV PROPFIND** visibility without a FILES-semantics reason.
+- What **may** still matter is the **causal parent** (first `blockRef` = observed log head): you need that event in the log to **order** the new event in the DAG. That is not “need blob Y to know file X”, it is “need parent event hash to extend causal chain”. Conflating parent-event readiness with content-block readiness in one `blockRefs` loop is likely the bug.
+
+**Likely fix direction (not implemented):**
+
+- Apply inbound FILES events when the **event file is stored and verifiable** and the **parent event ref** is present (for ordering only).
+- Do **not** gate materialization on content blocks; gate **`getFile` / decrypt** on blob presence instead (already fails at read time if missing).
+- Revisit whether `block-received` must full-reload all open volumes or can retry only channels with pending events.
+
+---
+
+## 9. Related commits (pushed `main`)
 
 | Repo | Notes |
 |------|--------|
-| nearbytes-files | CLI removal, `probeRuntime`, dev-bootstrap, lockfile prune |
+| nearbytes-files | CLI removal, `probeRuntime`, `syncInboundRefresh.ts` (c0dd6d4) |
+| nearbytes-engine | Delegates inbound sync to files; blunt reload-all removed |
 | nearbytes-cli, app, engine, components, widgets | dev-bootstrap wired to `dev` |
 | nearbytes-benchmarks | `probe-runtime` imports + dev-bootstrap |
+| nearbytes-specs | This WIP |
 | chat, log, skeleton, sync | dev-bootstrap script only |
 
 ---
 
-*Last updated: 2026-06-04 — investigation thread; no implementation of engine/files unification in this WIP.*
+*Last updated: 2026-06-04 — includes open question on blockRefs gating vs FILES materialization semantics.*
