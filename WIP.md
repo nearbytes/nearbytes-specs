@@ -186,7 +186,7 @@ Shells (CLI, app) call protocols directly or through a thin coordinator — not 
 ## 7. Quick reference — inbound files (10-line version)
 
 1. Sync emits `event-received` / `block-received`.
-2. Probe path: skip until `blockRefs` deps exist locally (not a long wait).
+2. Inbound path today skips until `blockRefs` deps look local (**target: remove this** — see §8).
 3. Fast: `applyInboundEvent` — one hash, extend cache, incremental materialize if prefix OK.
 4. Slow: `markReplayStale` + `getReplayContext` — `newHashes` on disk minus cache.
 5. Re-sort merged log (`orderEventLogEntries` over `blockRefs` DAG).
@@ -198,36 +198,68 @@ Shells (CLI, app) call protocols directly or through a thin coordinator — not 
 
 ---
 
-## 8. Inbound sync: open volumes, `block-received`, and `blockRefs` (open question)
+## 8. `blockRefs`, inbound gating, and materialization philosophy
+
+### Design direction (target behaviour)
+
+**We should not wait for causal dependencies before materializing.** Apply and materialize every verified event as soon as we have it. The live view may be **partial** (missing paths, stale ordering on unrelated paths, unreadable blobs until sync catches up) and can become **more complete** as more events and blocks arrive. Deferral is not a first-class user-visible state — progress is.
+
+Read paths (`getFile`, decrypt) may still fail until content blocks exist; **tree / timeline / metadata** should not block on blobs or on unrelated channel events.
+
+---
+
+### Typical `blockRefs` on a FILES `CREATE_FILE` (`buildBlockRefs` in `fileEmit.ts`)
+
+| Ref | Typical hash | Role when **emitting** |
+|-----|----------------|------------------------|
+| `[0]` | **observedHead** | Last FILES event on the channel (any path) — causal “I built on this head”. |
+| `[1]` | **supersededEvent** (optional) | Prior event that last touched **this** path. |
+| `[2]` | **lastBlock** (optional) | Prior **content blob** at this path (overwrite lineage). |
+| last | **Y** | New encrypted blob (`introducedBlocks`; also in payload `content.blockHash`). |
+
+`MKDIR` / `DELETE` / `RENAME`: no new blob — usually `[observedHead, supersededEvent?, lastBlock?]` only.
+
+Only **`blockRefs[0]`** is used as the **parent link** in `orderEventLogEntries`. Other refs are lineage / carriage on the envelope; the materializer reads the **payload** (path, content ref, verbs), not those refs directly.
+
+---
 
 ### What the code does today (`syncInboundRefresh.ts`)
 
-**Why only open volumes?** Replay/materialization is expensive and only needed where this process holds a live `ReactiveVolume` (REPL `volume use`, app active hub). Registered-but-not-open hubs are skipped — nothing is reading them.
+**Open volumes only** — replay where a `ReactiveVolume` is live (REPL / active hub).
 
-**On `block-received`:** reload every **open** volume (`markReplayStale` → disk diff → rematerialize). Rationale in code/comments: blocks often arrive **before** the event is complete, or an earlier `event-received` was skipped; new blobs on disk may unblock replay. This is a conservative catch-all, not a precise dependency walk.
+**`block-received`:** full stale reload of open volumes (conservative catch-all).
 
-**On `event-received`:** `inboundEventReadyToMaterialize` loads the signed event and inspects **`blockRefs`** (hashes in the envelope: causal parent / prior event, plus content block hashes for blobs introduced by this event). “**Local**” means:
+**`event-received`:** `inboundEventReadyToMaterialize` requires:
 
-- Parent / head ref is already in the channel event list, **or** (when refs length is 1) that hash exists as a block on disk; and  
-- Any other refs that are **not** already known events must exist as blocks (`log.blocks.has` or file under `dataDir`).
+- `blockRefs[0]` in the channel event list (when multiple refs), or block-on-disk if sole ref; and  
+- every other ref not in the event list must exist as a **block** on disk.
 
-If not local → **return without applying** (no queue; a later sync event may retry).
+If not → skip (no queue; retry on a later sync notification).
 
-### Why this may be wrong (Vincenzo, 2026-06-04)
+---
 
-> If an event says “update file X, now it contains Y”, I don’t need **Y** to know the **current state of X** — the opposite: even if I already have blob **Y** on disk, that doesn’t help until the **event** is applied; and once the event is applied, **Y** is only needed when someone **reads bytes**, not for listing the tree.
+### Why much of this waiting is wrong
 
-**Agree for FILES metadata replay:**
+**Content blobs (`lastBlock`, new Y):** Materialized tree state comes from the **event payload**, not from reading blob bytes. Waiting for **Y** (or old **lastBlock**) before `ls` / timeline has no FILES-semantics benefit; only **`getFile`** should care about **Y**.
 
-- `CREATE_FILE` / `DELETE` / `RENAME` / `MKDIR` materialization uses the **decrypted event payload** (path, `blobHash`, wrapped key, timestamps). The materializer does **not** read blob plaintext to update `MaterializedFileSystem.files`.
-- So **waiting for content block Y** before `applyInboundEvent` delays **`ls` / timeline / WebDAV PROPFIND** visibility without a FILES-semantics reason.
-- What **may** still matter is the **causal parent** (first `blockRef` = observed log head): you need that event in the log to **order** the new event in the DAG. That is not “need blob Y to know file X”, it is “need parent event hash to extend causal chain”. Conflating parent-event readiness with content-block readiness in one `blockRefs` loop is likely the bug.
+**`supersededEvent`:** Lineage on emit. If already in the log, the checker skips it; if missing, the code incorrectly treats unknown **event hashes** like blocks (`blockReady`). Not a materialization prerequisite for the new path state.
 
-**Likely fix direction (not implemented):**
+**`observedHead`:** Parent **event** on the channel — often about a **different file** (e.g. “file 1 = X” then “file 2 = Y”). For **reading file 2**, you do not need file 1’s **content**; orphan in the **global DAG** does **not** mean “no semantics” for file 2’s payload.
 
-- Apply inbound FILES events when the **event file is stored and verifiable** and the **parent event ref** is present (for ordering only).
-- Do **not** gate materialization on content blocks; gate **`getFile` / decrypt** on blob presence instead (already fails at read time if missing).
-- Revisit whether `block-received` must full-reload all open volumes or can retry only channels with pending events.
+**When global order actually matters:** same path (overwrite/delete/rename chain), directory cascades, latest-wins on overlapping namespace. **When it mostly doesn’t:** independent paths — `/a` and `/b` are self-contained in their payloads.
+
+Today’s engine **couples** unrelated paths by refusing to merge until `observedHead` exists, so `orderedEntries` and incremental prefix stay globally consistent. That is an **implementation choice**, not a logical requirement for showing file 2 once its event is verified.
+
+**“Wait for parent so we don’t insert before parent exists”** — precise meaning: without the parent **event record** in the hydrated log, `orderEventLogEntries` / `hasOrderedPrefix` can mis-order or force full reload. It is **not** “wait to avoid not waiting”; it is deferring merge until a **global ordering** constraint is satisfied — a constraint we **want to relax** per design direction above.
+
+---
+
+### Likely fix direction (not implemented)
+
+- Remove `inboundEventReadyToMaterialize` gating (or limit to signature verify + event on disk).
+- Materialize each verified FILES event into state **immediately**; accept partial channel views; reconcile when more events arrive (re-materialize or per-path merge).
+- Gate **byte reads** on blob presence only.
+- Revisit `block-received` full reload vs retry pending channels only.
 
 ---
 
@@ -244,4 +276,4 @@ If not local → **return without applying** (no queue; a later sync event may r
 
 ---
 
-*Last updated: 2026-06-04 — includes open question on blockRefs gating vs FILES materialization semantics.*
+*Last updated: 2026-06-04 — materialization philosophy: apply events as we have them; partial → total over time; no causal wait.*
