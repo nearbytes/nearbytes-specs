@@ -150,7 +150,10 @@ with `ingest(entries)`, `state()`, and a change subscription.
      suffix from `liveVersion`;
   4. otherwise, select the nearest snapshot with `position ≤ insertAt` (or
      `initial()` if none), hydrate the ordered suffix from that position, and
-     `reduce` over it;
+     `reduce` over it. Entries supplied to the current `ingest()` call MUST be
+     used as authoritative hydrated entries for their hashes during this replay;
+     implementations MUST NOT discard the in-hand batch and race the filesystem
+     for those same events;
   5. persist the new order index and live state; conditionally write a snapshot
      (§6.3) and prune (§6.3); emit a change event.
 - **PROJ-4.3 Bounded hydration.** Only the ordered suffix actually folded MUST be
