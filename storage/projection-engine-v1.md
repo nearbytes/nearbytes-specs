@@ -158,6 +158,13 @@ with `ingest(entries)`, `state()`, and a change subscription.
   incremental ingest.
 - **PROJ-4.4 Warm reads.** `state()` MUST return live state without re-reading the
   log when the engine is warm.
+- **PROJ-4.5 Partial rebuild safety.** When replaying from a persisted order
+  index or snapshot, the engine MUST hydrate every key in the folded range before
+  reducing and persisting the resulting live state. If any referenced event
+  cannot be hydrated, the engine MUST NOT persist a live state whose position
+  claims that missing key. Because materialized state is rebuildable cache, the
+  engine MUST discard the affected projection namespace and rebuild from the
+  canonical event log instead.
 
 ### 6.3 Snapshot ladder (PROJ-5)
 
