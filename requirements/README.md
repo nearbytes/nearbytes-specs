@@ -19,6 +19,9 @@ Normative requirements for clean-code packages (`nearbytes-crypto`, `nearbytes-l
 - **DISC-27.4** — *Cross-process write propagation.* A running sync engine watches `dataDir` (inotify / FSEvents / ReadDirectoryChangesW or an equivalent abstraction) and appends a reception entry for each newly-observed file, so cross-process writes are indistinguishable on the wire from sync-engine-authored writes.
 - **OBS-01–OBS-15** — *Observability.* State beacon (`.nearbytes-sync.state.json`), LIVE/DAEMON/WRITER-ONLY modes, `nbsync status` / `probeSyncLock`.
 - **OBS-20–OBS-43** — *Event bus + handshake UX.* Wire events (`peer-connected`, `peer-connect-failed`, transfers), DHT `host:port` labels, classified handshake retries without stderr stack traces.
+- **OBS-64–OBS-65** — *Association stall + rotation.* `peer-stalled` before forced teardown; monitor rendering.
+- **SYNC-63–SYNC-67** — *Transport health.* TCP keepalive, in-flight stall budgets, quiescent session rotation, LAN re-dial after close.
+- **DISC-24.1** — *mDNS re-dial.* Clear outbound dedup when an association to a LAN endpoint closes.
 - **OBS-50–OBS-54** — *Reference CLI.* `nbf peers`, `nbf monitor`, `nbf whoami`, flush budgets for one-shot writers when friends are configured.
 - **SYNC-15** — *Mutual anti-entropy.* Every live association runs identical subscribe/delta/have/want/data logic on both sides; transport dial direction does not assign roles.
 - **SYNC-16–SYNC-17** — *Causal dependency repair.* After storing events/blocks and after the local resume walk completes, scan local orphans and issue explicit `want`s for missing parent events and content blocks named in visible `blockRefs`; serialized on the inbound queue, no timers.

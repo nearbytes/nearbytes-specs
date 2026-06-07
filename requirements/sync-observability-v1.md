@@ -36,7 +36,7 @@ It complements `sync-discovery-v1.md` (DISC-27) and `sync-protocol-v1.md` (wire 
 | Rule | Requirement |
 |------|-------------|
 | OBS-20 | `start()` MUST own a `SyncEventBus` emitting wire-level observability events. Subscribers via `SyncHandle.onEvent()` MUST be notified without blocking the protocol (slow handlers MUST NOT stall sends/receives). |
-| OBS-21 | Event kinds (closed union, reference implementation): `peer-connected`, `peer-disconnected`, `peer-connect-failed`, `block-sent`, `block-received`, `event-received`. Each event carries `at` as epoch milliseconds. |
+| OBS-21 | Event kinds (closed union, reference implementation): `peer-connected`, `peer-disconnected`, `peer-connect-failed`, `peer-stalled`, `block-sent`, `block-received`, `event-received`. Each event carries `at` as epoch milliseconds. |
 | OBS-22 | A bounded ring buffer (reference: 256 events) MUST retain recent events for `SyncHandle.recentEvents()` and for mirroring into the state beacon. |
 | OBS-23 | `peer-connected` / `peer-disconnected` MUST include `remoteProfilePublicKey`, `remoteInstancePublicKey`, `transportLabel`, and `role` (`sibling` \| `friend`). |
 | OBS-24 | `block-sent`, `block-received`, and `event-received` MUST include byte counts and object identifiers sufficient for throughput aggregation (`stats`). |
@@ -61,7 +61,14 @@ Discovery backends MUST normalise endpoints into stable, parseable `transportLab
 | OBS-42 | After retries are exhausted, implementations MUST emit `peer-connect-failed` on the event bus with `reason` (machine tag, e.g. `handshake-timeout`), `attempts`, and best-effort remote identity fields. |
 | OBS-43 | Reference CLI (`nbf monitor`) MUST render `peer-connect-failed` in the activity log instead of dumping an exception. `--debug` MAY enable stack traces for diagnostics. |
 
-## 6. Reference CLI (`nbf`)
+## 6. Association stall and rotation
+
+| Rule | Requirement |
+|------|-------------|
+| OBS-64 | When an association is closed because an in-flight stall budget expired (SYNC-64) or a quiescent session reached its rotation age (SYNC-65), implementations MUST emit `peer-stalled` on the event bus **before** the socket teardown produces `peer-disconnected`. The event MUST include `reason` (machine tag: `want-timeout`, `stream-timeout`, `resume-timeout`, `outbound-timeout`, or `session-rotation`), `remoteProfilePublicKey`, `remoteInstancePublicKey`, `remotePeerId`, `transportLabel`, and `role` (`sibling` \| `friend`). |
+| OBS-65 | Reference CLI (`nbf monitor`) MUST render `peer-stalled` in the activity log with the `reason` tag. |
+
+## 7. Reference CLI (`nbf`)
 
 | Rule | Requirement |
 |------|-------------|
@@ -71,7 +78,7 @@ Discovery backends MUST normalise endpoints into stable, parseable `transportLab
 | OBS-53 | Global flags `-m` / `--monitor` and `--debug` MUST be documented in `nbf --help` and REPL `help`. |
 | OBS-54 | One-shot mutating commands (`file add`, `file remove`, `profile publish`, `say`) that run without an active daemon MUST wait for at least one connected peer (when `friends` is non-empty) before exiting, with a WAN-friendly timeout (reference: 60 s when friends configured, 15 s otherwise). They MUST warn when no peer was found within the budget; local writes remain durable and sync later. |
 
-## 7. Throughput statistics
+## 8. Throughput statistics
 
 | Rule | Requirement |
 |------|-------------|
